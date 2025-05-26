@@ -29,6 +29,8 @@
             - Affichage de tous les éléments du wireframe de l'application. ( voir GP/wireframe.png)
 
             - Les methodes nécéssaires pour permettre à l'utilisateur d'ajouter les ingrédients sur le graphe - (drag and drop).
+        
+        ### Classe controleurClient
 
     ## Application 2 - ( Client ).
         ### Classe client - ( methodes utiles pour le client )
@@ -45,3 +47,5 @@
             - Affichage de tous les éléments du wireframe.
 
             - Affichage de l'image et du trajet le plus court.
+
+        ### Classe ControleurClient
