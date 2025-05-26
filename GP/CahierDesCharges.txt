@@ -1,0 +1,47 @@
+# Cahier des charges.
+    ## Application 1 - ( Administrateur ).
+        ### Autre
+            - Notice d'utilisation
+
+        ### Classe Magasin.
+
+            - Une structure de données qui permettra de cartographier un magazin (une graphe).
+
+            - Fonctionalité de lecture de liste_produits.csv.
+
+            - Possibilité d'affichage du magasin :
+                - Afficher un quadrillage qui sera paramétrable par l'Administrateur.
+
+            - Possibilité de remplissage du magazin :
+                - Drag and drop fonctionnel pour positionnement des éléments
+                - Possibilité de voir quels éléments sont placés dans les rayons en temps réels.
+
+            - Gestion d'un projet de l'admin : 
+                - Définir le nom du projet.
+                - Enregistrement du projet dans un CSV :
+                    - Nom du projet, auteur, date... metadata.
+                    - Données de positionnement.
+                - Ouvrir un projet.
+                - Supprimer un projet.
+
+        ### Classe vueAdmin - ( Pour l'interface graphique )
+
+            - Affichage de tous les éléments du wireframe de l'application. ( voir GP/wireframe.png)
+
+            - Les methodes nécéssaires pour permettre à l'utilisateur d'ajouter les ingrédients sur le graphe - (drag and drop).
+
+    ## Application 2 - ( Client ).
+        ### Classe client - ( methodes utiles pour le client )
+            - Choisir un magasin - (fichiers enregistrés).
+            
+            - Voir la position des éléments dans les rayons.
+
+            - établir une liste de courses.
+
+            - Afficher sur le plan les chemins les plus efficaces pour récupérer la liste de courses.
+
+        ### Classe VueClient
+
+            - Affichage de tous les éléments du wireframe.
+
+            - Affichage de l'image et du trajet le plus court.
