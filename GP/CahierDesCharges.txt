@@ -5,15 +5,16 @@
 
         ### Classe Magasin.
 
-            - Une structure de données qui permettra de cartographier un magazin (une graphe).
+            - Une structure de données qui permettra de cartographier un magazin (un graphe).
 
             - Fonctionalité de lecture de liste_produits.csv.
 
             - Possibilité d'affichage du magasin :
-                - Afficher un quadrillage qui sera paramétrable par l'Administrateur.
+                - Afficher un quadrillage qui sera paramétrable par l'Administrateur. ( via un curceur relié a une checkbox)
 
             - Possibilité de remplissage du magazin :
-                - Drag and drop fonctionnel pour positionnement des éléments
+                - Drag and drop fonctionnel pour positionnement des éléments.
+                    - Gérer des conflits avec les rayons, couloirs etc...
                 - Possibilité de voir quels éléments sont placés dans les rayons en temps réels.
 
             - Gestion d'un projet de l'admin : 
@@ -36,9 +37,13 @@
             
             - Voir la position des éléments dans les rayons.
 
-            - établir une liste de courses.
+            - Une structure de données permettant de gérer une liste de courses.
+                - établir une liste de courses en cochant les items.
+                - Afficher une liste de course dans la fenêtre.
+                -
 
             - Afficher sur le plan les chemins les plus efficaces pour récupérer la liste de courses.
+
 
         ### Classe VueClient
 
