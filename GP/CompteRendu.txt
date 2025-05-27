@@ -1,6 +1,6 @@
 de 8H 30 à 10h le 26/05/2025 :
   personnes présentes : 
-    Timéo Dofagne
+    Timéo Doffagne
     Thomas Eugène
   tâches réalisées :
       création du dossier git et github.
@@ -21,3 +21,11 @@ de 10h15 à 11h30 :
       relecture du CDc et du trello.
       création des branche "classControlleurMagasin", "classClontrolleurClient".
       modification du CDC.
+
+de 10h15 à 11h30 :
+  personnes présentes :
+    Timéo Doffagne
+    Thomas Eugène
+  tâches réalisées :
+      modification du CDC.
+      Création des wireframes.
