@@ -19,3 +19,5 @@ articleMaison: list = produits["Articles maison"]
 hygiene: list = produits["Hygiène"]
 bureau: list = produits["Bureau"]
 animaux: list = produits["Animaux"]
+
+# Ajouter "import structureDonnees" au debut du code Admin
