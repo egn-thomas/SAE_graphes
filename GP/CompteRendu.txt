@@ -1,0 +1,23 @@
+de 8H 30 à 10h le 26/05/2025 :
+  personnes présentes : 
+    Timéo Dofagne
+    Thomas Eugène
+  tâches réalisées :
+      création du dossier git et github.
+      ajout des fichier "sae_sujet.pdf", "liste_produits.csv", "plan_magasin.jpg".
+      création du CDC.
+      création du trello.
+
+
+de 10h15 à 11h30 :
+  personnes présentes :
+    Lara Fremy
+    Célien Kerckhove
+  tâches réalisées :
+    Célien Kerckhove : 
+      création des branche "classMagasin", "ClassVueAdmin", "ClassClient", "ClassVueClient".
+      relecture du CDC et du trello.
+    Lara Fremy :
+      relecture du CDc et du trello.
+      création des branche "classControlleurMagasin", "classClontrolleurClient".
+      modification du CDC.
