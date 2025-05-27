@@ -1,4 +1,4 @@
-de 8H 30 à 10h le 26/05/2025 :
+10h le 26/05/2025 (séance de cours) :
   personnes présentes : 
     Timéo Doffagne
     Thomas Eugène
@@ -9,7 +9,7 @@ de 8H 30 à 10h le 26/05/2025 :
       création du trello.
 
 
-de 10h15 à 11h30 :
+11h30 le 26/05/2025 (séance de cours) :
   personnes présentes :
     Lara Fremy
     Célien Kerckhove
@@ -22,10 +22,20 @@ de 10h15 à 11h30 :
       création des branche "classControlleurMagasin", "classClontrolleurClient".
       modification du CDC.
 
-de 10h15 à 11h30 :
+11h30 le 27/05/2025 (séance de cours) :
   personnes présentes :
     Timéo Doffagne
     Thomas Eugène
   tâches réalisées :
       modification du CDC.
       Création des wireframes.
+
+12h45 le 27/05/2025 (hors séances) :
+  personnes présentes :
+    Timéo Doffagne
+    Thomas Eugène
+    Lara Fremy
+    Célien Kerckhove
+
+  tâche réalisees :
+    Répartition des tâches pour toute la SAE. 

@@ -3,7 +3,7 @@
         ### Autre
             - Notice d'utilisation
 
-        ### Classe Magasin.
+        ### Classe Admin.
 
             - Une structure de données qui permettra de cartographier un magazin (un graphe).
 
@@ -31,7 +31,8 @@
 
             - Les methodes nécéssaires pour permettre à l'utilisateur d'ajouter les ingrédients sur le graphe - (drag and drop).
 
-        ### Classe controleurMagasin
+        ### Classe controleurAdmin
+
 
     ## Application 2 - ( Client ).
         ### Classe client - ( methodes utiles pour le client )
@@ -54,3 +55,5 @@
             - Affichage de tous les éléments du wireframe.
 
             - Affichage de l'image et du trajet le plus court.
+
+        ### Classe controleurClient
