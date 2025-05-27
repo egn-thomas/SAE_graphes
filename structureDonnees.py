@@ -1,23 +1,27 @@
-import json
+import csv
+import pandas as pd
 
-with open('liste.json', 'r', encoding='utf-8') as liste:
-    produits = json.load(liste)
+with open('liste_produits.csv', mode='r', encoding='utf-8') as produits:     # Lit le csv
+    df = pd.read_csv("liste_produits.csv")
+    df.columns = df.columns.str.strip()
+    csv.DictReader(produits, delimiter=';')
+    pd.read_csv("data.csv", sep=';')
 
-legumes: list = produits["Légumes"]             # Toutes les catégories sont classées ici, l'administrateur peut ajouter des éléments à cette liste
-poisson: list = produits["Poissons"]
-viande: list = produits["Viandes"]
-epicerie: list = produits["Épicerie"]
-epicerieSucree: list = produits["Épicerie sucrée"]
-petitDejeuner: list = produits["Petit déjeuner"]
-fruits: list = produits["Fruits"]
-rayonFrais: list = produits["Rayon frais"]
-cremerie: list = produits["Crèmerie"]
-conserves: list = produits["Conserves"]
-aperitifs: list = produits["Apéritifs"]
-boissons: list = produits["Boissons"]
-articleMaison: list = produits["Articles maison"]
-hygiene: list = produits["Hygiène"]
-bureau: list = produits["Bureau"]
-animaux: list = produits["Animaux"]
+legumes = df["Légumes"].dropna().tolist()               # Toutes les catégories sont classées ici, l'administrateur peut ajouter des éléments à cette liste
+poissons = df["Poissons"].dropna().tolist()
+viande = df["Viandes"].dropna().tolist()
+epicerie = df["Épicerie"].dropna().tolist()
+epicerieSucree = df["Épicerie sucrée"].dropna().tolist()
+petitDejeuner = df["Petit déjeuner"].dropna().tolist()
+fruits = df["Fruits"].dropna().tolist()
+rayonFrais = df["Rayon frais"].dropna().tolist()
+cremerie = df["Crèmerie"].dropna().tolist()
+conserves = df["Conserves"].dropna().tolist()
+apperitifs = df["Apéritifs"].dropna().tolist()
+boissons = df["Boissons"].dropna().tolist()
+articleMaison = df["Articles Maison"].dropna().tolist()
+hygiene = df["Hygiène"].dropna().tolist()
+bureau = df["Bureau"].dropna().tolist()
+animaux = df["Animaux"].dropna().tolist()
 
 # Ajouter "import structureDonnees" au debut du code Admin
