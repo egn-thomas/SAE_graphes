@@ -10,3 +10,5 @@ categories = {
 }
 
 # liste_catégories : ["Légumes","Poissons","Viandes","Épicerie","Épicerie sucrée","Petit déjeuner","Fruits","Rayon frais","Crèmerie","Conserves","Apéritifs","Boissons","Articles Maison","Hygiène","Bureau","Animaux"]
+
+# Mettre "import structureDonnees.py" dans l'app admin et peut être client
