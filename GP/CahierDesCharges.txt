@@ -46,6 +46,8 @@
 
             - Afficher sur le plan les chemins les plus efficaces pour récupérer la liste de courses.
 
+            + Barre de recherche
+
 
         ### Classe VueClient
 
