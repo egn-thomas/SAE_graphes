@@ -11,4 +11,4 @@ class csvLoader :
             return [row for row in reader]
             
 csv_loader=csvLoader('liste_produits.csv')
-liste_prooduits= csv_loader.extract_all()
+liste_produits= csv_loader.extract_all()
