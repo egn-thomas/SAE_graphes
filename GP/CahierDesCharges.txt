@@ -31,6 +31,8 @@
 
             - Les methodes nécéssaires pour permettre à l'utilisateur d'ajouter les ingrédients sur le graphe - (drag and drop).
 
+        ### Classe controleurMagasin
+
     ## Application 2 - ( Client ).
         ### Classe client - ( methodes utiles pour le client )
             - Choisir un magasin - (fichiers enregistrés).
