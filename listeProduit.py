@@ -9,7 +9,7 @@ class csvLoader :
         with open(self.file_path, newline='', encoding='utf-8') as csvfile:
             reader=csv.reader(csvfile, delimiter=self.delimiter)
             return [row for row in reader]
-            
+#lecture du fichier CSV
 csv_loader=csvLoader('liste_produits.csv')
 liste_produits= csv_loader.extract_all()
 csv_loader=csvLoader('Magasin.csv')
