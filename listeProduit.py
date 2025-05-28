@@ -12,3 +12,5 @@ class csvLoader :
             
 csv_loader=csvLoader('liste_produits.csv')
 liste_produits= csv_loader.extract_all()
+csv_loader=csvLoader('Magasin.csv')
+liste_produits_magasin=csv_loader.extract_all()
