@@ -1,4 +1,5 @@
-from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtWidgets import QApplication
 import sys
 import os
@@ -79,7 +80,6 @@ class VueAdmin(QtWidgets.QWidget):
 
 
 
-
     def create_partieDroite(self):
         # Paramètres de la partie droite
         self.partieDroite = QtWidgets.QWidget(self)
@@ -106,8 +106,23 @@ class VueAdmin(QtWidgets.QWidget):
         layoutHeader.addWidget(self.label)
         layoutHeader.addWidget(self.nomMagasin)
 
+        self.labelPlan = QtWidgets.QLabel(self.partieDroite)
+        transform = QTransform().rotate(90)
+        plan = QPixmap("../plan_magasin.jpg")
+        plan = plan.transformed(transform)
+        self.labelPlan.setPixmap(plan)
+        self.labelPlan.setScaledContents(True)
+        self.labelPlan.setMaximumSize(700, 850)
+        self.labelPlan.setStyleSheet("margin-left: 100px;")
+
+    
+
         layout.addWidget(header, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.labelPlan)
+
         self.layout.addWidget(self.partieDroite, stretch=1)
+
+
 
 
 
