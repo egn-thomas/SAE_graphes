@@ -28,7 +28,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.listeArticles.setStyleSheet("background-color: #2c2c2c; color: white;")
         self.listeArticles.setMinimumHeight(100)
 
-        layoutArticles = QtWidgets.QHBoxLayout(self.listeArticles)
+        layoutArticles = QtWidgets.QVBoxLayout(self.listeArticles)
 
         self.listeArticlesrecherche = QtWidgets.QLineEdit(self.listeArticles)
         self.listeArticlesrecherche.setPlaceholderText("Rechercher un article...")
@@ -39,15 +39,19 @@ class VueAdmin(QtWidgets.QWidget):
 
         # Ajout du tableau de bord
         self.tableauDeBord = QtWidgets.QWidget(self.partieGauche)
-        self.tableauDeBord.setStyleSheet("background-color: #2c2c2c; color: white; border: 3px solid #BBBBBB")
+        self.tableauDeBord.setStyleSheet("background-color: #2c2c2c; color: white;")
         self.tableauDeBord.setMinimumHeight(100)
 
-        layoutTableauBord = QtWidgets.QHBoxLayout(self.tableauDeBord)
+        layoutTableauBord = QtWidgets.QVBoxLayout(self.tableauDeBord)
 
-        self.labelTableauBord = QtWidgets.QLabel("Tableau de Bord", self.tableauDeBord)
-        self.labelTableauBord.setStyleSheet("color: white; border: none;")
+        self.labelTableauBord = QtWidgets.QLabel("Réglages du magasin", self.tableauDeBord)
+        self.curseurTableauBord = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
+        self.spinTableauBord = QtWidgets.QSpinBox(self.tableauDeBord)
+        self.spinTableauBord.setRange(0, 4)
 
         layoutTableauBord.addWidget(self.labelTableauBord)
+        layoutTableauBord.addWidget(self.curseurTableauBord)
+        layoutTableauBord.addWidget(self.spinTableauBord)
 
         # Ajout des widgets à la partie gauche
         layout.addWidget(self.listeArticles, stretch=4)
