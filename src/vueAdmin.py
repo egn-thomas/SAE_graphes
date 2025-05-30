@@ -4,6 +4,10 @@ from PyQt6.QtWidgets import QApplication
 import sys
 import os
 
+
+
+
+
 class VueAdmin(QtWidgets.QWidget):
     def __init__(self):
         super(VueAdmin, self).__init__()
@@ -18,6 +22,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partieDroite()
 
    
+
    
    
     def create_partieGauche(self):
@@ -27,6 +32,8 @@ class VueAdmin(QtWidgets.QWidget):
         self.partieGauche.setStyleSheet("background-color: #232323; font-size: 16px; color: white;")
         
         layout = QtWidgets.QVBoxLayout(self.partieGauche)
+
+
 
         # Création de la liste des articles
         self.listeArticles = QtWidgets.QWidget(self.partieGauche)
@@ -47,6 +54,8 @@ class VueAdmin(QtWidgets.QWidget):
 
         layoutArticles.addWidget(self.listeArticlesrecherche, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft, stretch=1)
         layoutArticles.addWidget(self.articlesBox, stretch=12)
+
+
 
         # Ajout du tableau de bord
         self.tableauDeBord = QtWidgets.QWidget(self.partieGauche)
@@ -69,6 +78,8 @@ class VueAdmin(QtWidgets.QWidget):
         layoutTableauBord.addWidget(self.labelTableauBord)
         layoutTableauBord.addWidget(self.spinTableauBord)
         layoutTableauBord.addWidget(self.curseurTableauBord)
+
+
 
         # Ajout des widgets à la partie gauche
         layout.addWidget(self.listeArticles, stretch=4)
@@ -112,8 +123,8 @@ class VueAdmin(QtWidgets.QWidget):
         plan = plan.transformed(transform)
         self.labelPlan.setPixmap(plan)
         self.labelPlan.setScaledContents(True)
-        self.labelPlan.setMaximumSize(700, 850)
-        self.labelPlan.setStyleSheet("margin-left: 100px;")
+        self.labelPlan.setMaximumSize(760, 900)
+        self.labelPlan.setStyleSheet("margin-left: 160px; margin-bottom: 100px")
 
     
 
