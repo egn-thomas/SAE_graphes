@@ -10,7 +10,12 @@ class csvLoader :
             reader=csv.reader(csvfile, delimiter=self.delimiter)
             return [row for row in reader]
 #lecture du fichier CSV
-csv_loader=csvLoader('liste_produits.csv')
-liste_produits= csv_loader.extract_all()
-csv_loader=csvLoader('Magasin.csv')
-liste_produits_magasin=csv_loader.extract_all()
+
+if __name__ == "__main__":
+    csv_loader=csvLoader('liste_produits.csv')
+    liste_produits= csv_loader.extract_all()
+    csv_loader=csvLoader('Magasin.csv')
+    liste_produits_magasin=csv_loader.extract_all()
+
+    print(liste_produits)
+    print(liste_produits_magasin)
