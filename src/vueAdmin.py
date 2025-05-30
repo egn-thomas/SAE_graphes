@@ -3,6 +3,7 @@ from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtWidgets import QApplication
 import sys
 import os
+import listeProduit as lp
 
 
 
@@ -49,6 +50,18 @@ class VueAdmin(QtWidgets.QWidget):
 
         self.articlesBox = QtWidgets.QWidget(self.listeArticles)
         self.articlesBox.setStyleSheet("border: 5px solid #232323;")
+
+        path = "./liste_produits.csv"
+        loader = lp.csvLoader(path)
+        produits = loader.extract_all()
+
+        categories = produits[0]
+        liste_produits = [dict(zip(categories, row)) for row in produits[1:]]
+
+        for categorie in categories:
+            label = QtWidgets.QLabel(categorie, self.articlesBox)
+            label.setStyleSheet("font-weight: bold; margin-top: 10px;")
+            self.articlesBox.addWidget(label)
 
         layoutarticlesBox = QtWidgets.QHBoxLayout(self.articlesBox)
 
