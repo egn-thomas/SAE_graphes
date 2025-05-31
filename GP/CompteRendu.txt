@@ -37,5 +37,12 @@
     Lara Fremy
     Célien Kerckhove
 
-  tâche réalisees :
+  tâche réalisée :
     Répartition des tâches pour toute la SAE. 
+
+17h le 27/05/2025 (hors séance) :
+  Personne présente :
+    Timéo Doffagne
+  
+  Tâche réalisée :
+    Réalisation de la structure de données
