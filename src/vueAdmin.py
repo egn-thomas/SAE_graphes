@@ -165,7 +165,19 @@ class VueAdmin(QtWidgets.QWidget):
 
         self.labelPlan = DropArea(self.partieDroite)
         transform = QTransform().rotate(90)
-        plan = QPixmap("../plan_magasin.jpg")
+
+        try:
+            path = "../plan_magasin.jpg"
+            plan = QPixmap(path)
+        except FileNotFoundError:
+            try:
+                path = "plan_magasin.jpg"
+                plan = QPixmap(path)
+                
+            except FileNotFoundError:
+                print("Erreur : aucun plan de magazin trouvé.")
+                loader = None
+
         plan = plan.transformed(transform)
         self.labelPlan.setPixmap(plan)
         self.labelPlan.setScaledContents(True)
