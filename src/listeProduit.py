@@ -12,9 +12,9 @@ class csvLoader :
 #lecture du fichier CSV
 
 if __name__ == "__main__":
-    csv_loader=csvLoader('liste_produits.csv')
+    csv_loader=csvLoader('../liste_produits.csv')
     liste_produits= csv_loader.extract_all()
-    csv_loader=csvLoader('Magasin.csv')
+    csv_loader=csvLoader('../Magasin.csv')
     liste_produits_magasin=csv_loader.extract_all()
 
     print(liste_produits)
