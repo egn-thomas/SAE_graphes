@@ -1,4 +1,4 @@
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtWidgets import QApplication
 import sys
@@ -50,10 +50,10 @@ class VueAdmin(QtWidgets.QWidget):
 
         # Créer articlesBox et son layout
         self.articlesBox = QtWidgets.QWidget(self.listeArticles)
-        self.articlesBox.setStyleSheet("border: 5px solid #232323;")
-        layoutarticlesBox = QtWidgets.QVBoxLayout(self.articlesBox)
-        layoutarticlesBox.setContentsMargins(20, 20, 20, 140)
-        layoutarticlesBox.setSpacing(30)
+        self.layoutarticlesBox = QtWidgets.QVBoxLayout(self.articlesBox)
+        self.layoutarticlesBox.setContentsMargins(20, 20, 20, 140)
+        self.layoutarticlesBox.setSpacing(10)
+
 
         # Charger les données
         path = "../liste_produits.csv"
@@ -63,30 +63,24 @@ class VueAdmin(QtWidgets.QWidget):
         categories = produits[0]
         liste_produits = [dict(zip(categories, row)) for row in produits[1:]]
 
-        # Ajouter un label par catégorie
-        i = 0
+        self.produits_par_categorie = {cat: [] for cat in categories}
+
+        for produit in liste_produits:
+            for cat in categories:
+                valeur = produit[cat]
+                if valeur:
+                    self.produits_par_categorie[cat].append(valeur)
+
+        # Ajouter un bouton par catégorie
         for categorie in categories:
-            i += 1  
-            label = QtWidgets.QLabel(categorie, self.articlesBox)
-            label.setMaximumSize(150, 50)
-            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
-            label.setObjectName("categorieLabel")
-            label.setMinimumHeight(50)
-            layoutarticlesBox.addWidget(label)
-
-        self.setStyleSheet("""
-            QLabel#categorieLabel {
-                padding-left: 10px;
-                border: none;
-                background-color: #232323;
-                border-radius: 5px;
-            }
-
-            QLabel#categorieLabel:hover {
-                background-color: #444444;
-                color: #ffffff;
-            }
-        """)
+            btn = QtWidgets.QPushButton(categorie, self.articlesBox)
+            btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            btn.setFixedHeight(55)
+            btn.setMinimumWidth(150)
+            btn.clicked.connect(lambda checked, cat=categorie: self.afficher_produits_de_categorie(cat))
+            btn.setStyleSheet("background-color: #232323; border-radius: 5px; color: white; padding: 10px; margin-bottom: 10px;")
+            self.layoutarticlesBox.addWidget(btn, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
+        
 
         scroll = QtWidgets.QScrollArea(self.listeArticles)
         scroll.setWidgetResizable(True)
@@ -94,8 +88,8 @@ class VueAdmin(QtWidgets.QWidget):
 
         scroll.setWidget(self.articlesBox)
 
-        layoutArticles.addWidget(scroll, stretch=12)
         layoutArticles.addWidget(self.listeArticlesrecherche, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft, stretch=1)
+        layoutArticles.addWidget(scroll, stretch=12)
 
 
 
@@ -159,7 +153,7 @@ class VueAdmin(QtWidgets.QWidget):
         layoutHeader.addWidget(self.label)
         layoutHeader.addWidget(self.nomMagasin)
 
-        self.labelPlan = QtWidgets.QLabel(self.partieDroite)
+        self.labelPlan = DropArea(self.partieDroite)
         transform = QTransform().rotate(90)
         plan = QPixmap("../plan_magasin.jpg")
         plan = plan.transformed(transform)
@@ -174,6 +168,121 @@ class VueAdmin(QtWidgets.QWidget):
         layout.addWidget(self.labelPlan)
 
         self.layout.addWidget(self.partieDroite, stretch=1)
+
+
+
+
+
+    def clear_layout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+
+
+
+
+    def afficher_produits_de_categorie(self, categorie):
+        print(f"[DEBUG] Categorie cliquée : {categorie}")
+        self.clear_layout(self.layoutarticlesBox)
+
+        # ← Bouton de retour
+        btn_retour = QtWidgets.QPushButton("← Retour", self.articlesBox)
+        btn_retour.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        btn_retour.setFixedHeight(40)
+        btn_retour.setMaximumWidth(150)
+        btn_retour.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
+        btn_retour.clicked.connect(self.afficher_categories)
+        self.layoutarticlesBox.addWidget(btn_retour)
+
+        produits = self.produits_par_categorie.get(categorie, [])
+        print(f"[DEBUG] Produits : {produits}")
+
+        for produit in produits:
+            label = DraggableLabel(produit, self.articlesBox)
+            label.setStyleSheet("color: white; background-color: #333; padding: 5px; border-radius: 3px;")
+            label.setMinimumHeight(40)
+            label.setMaximumWidth(300)
+            self.layoutarticlesBox.addWidget(label)
+
+        self.articlesBox.adjustSize()
+        self.articlesBox.update()
+
+
+
+
+
+    def afficher_categories(self):
+        self.clear_layout(self.layoutarticlesBox)
+
+        for categorie in self.produits_par_categorie.keys():
+            btn = QtWidgets.QPushButton(categorie, self.articlesBox)
+            btn.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            btn.setFixedHeight(55)
+            btn.setMinimumWidth(150)
+            btn.clicked.connect(lambda checked, cat=categorie: self.afficher_produits_de_categorie(cat))
+            btn.setStyleSheet("background-color: #232323; border-radius: 5px; color: white; padding: 10px; margin-bottom: 10px;")
+            self.layoutarticlesBox.addWidget(btn, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
+
+
+
+
+
+class DraggableLabel(QtWidgets.QLabel):
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self.setMinimumHeight(40)
+        self.setStyleSheet("color: white; background-color: #333; padding: 5px; border-radius: 3px;")
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+
+
+
+
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            mimeData = QtCore.QMimeData()
+            mimeData.setText(self.text())
+
+            drag = QtGui.QDrag(self)
+            drag.setMimeData(mimeData)
+
+            pixmap = self.grab()
+            drag.setPixmap(pixmap)
+            drag.setHotSpot(event.pos())
+
+            drag.exec(QtCore.Qt.DropAction.MoveAction)
+
+
+
+
+
+class DropArea(QtWidgets.QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setPixmap(QPixmap("../plan_magasin.jpg").transformed(QTransform().rotate(90)))
+        self.setScaledContents(True)
+        self.setMaximumSize(760, 900)
+        self.setStyleSheet("margin-left: 160px; margin-bottom: 100px")
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        produit = event.mimeData().text()
+        print(f"[DROP] Produit déposé : {produit}")
+
+        # Option visuelle : afficher un petit label sur la zone
+        label = QtWidgets.QLabel(produit, self)
+        label.move(event.position().toPoint())  # Qt 6.0+
+        label.setStyleSheet("background-color: #555; color: white; padding: 2px; border-radius: 2px;")
+        label.adjustSize()
+        label.show()
+
+        event.acceptProposedAction()
 
 
 
