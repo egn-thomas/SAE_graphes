@@ -53,20 +53,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.articlesBox.setStyleSheet("border: 5px solid #232323;")
         layoutarticlesBox = QtWidgets.QVBoxLayout(self.articlesBox)
         layoutarticlesBox.setContentsMargins(20, 20, 20, 140)
-
-        self.articlesBox1 = QtWidgets.QWidget(self.articlesBox)
-        layoutarticlesBox1 = QtWidgets.QHBoxLayout(self.articlesBox1)
-        self.articlesBox2 = QtWidgets.QWidget(self.articlesBox)
-        layoutarticlesBox2 = QtWidgets.QHBoxLayout(self.articlesBox2)
-        self.articlesBox3 = QtWidgets.QWidget(self.articlesBox)
-        layoutarticlesBox3 = QtWidgets.QHBoxLayout(self.articlesBox3)
-        layoutarticlesBox1.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
-        layoutarticlesBox2.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
-        layoutarticlesBox3.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
-        self.articlesBox1.setStyleSheet("border: none; height: 100px;")
-        self.articlesBox2.setStyleSheet("border: none; height: 100px;")
-        self.articlesBox3.setStyleSheet("border: none; height: 100px;")
-
+        layoutarticlesBox.setSpacing(30)
 
         # Charger les données
         path = "../liste_produits.csv"
@@ -81,21 +68,34 @@ class VueAdmin(QtWidgets.QWidget):
         for categorie in categories:
             i += 1  
             label = QtWidgets.QLabel(categorie, self.articlesBox)
-            label.setMaximumSize(120, 120)
+            label.setMaximumSize(150, 50)
             label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
-            label.setStyleSheet("font-weight: bold; margin-top: 10px; border: none; background-color: #232323; border-radius: 5px; text-align: center;")
-            if i <= 6:
-                layoutarticlesBox1.addWidget(label)
-            elif i <= 12:
-                layoutarticlesBox2.addWidget(label)
-            else:
-                layoutarticlesBox3.addWidget(label)
+            label.setObjectName("categorieLabel")
+            label.setMinimumHeight(50)
+            layoutarticlesBox.addWidget(label)
 
-        layoutarticlesBox.addWidget(self.articlesBox1)
-        layoutarticlesBox.addWidget(self.articlesBox2)
-        layoutarticlesBox.addWidget(self.articlesBox3)
+        self.setStyleSheet("""
+            QLabel#categorieLabel {
+                padding-left: 10px;
+                border: none;
+                background-color: #232323;
+                border-radius: 5px;
+            }
+
+            QLabel#categorieLabel:hover {
+                background-color: #444444;
+                color: #ffffff;
+            }
+        """)
+
+        scroll = QtWidgets.QScrollArea(self.listeArticles)
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("border: none;")
+
+        scroll.setWidget(self.articlesBox)
+
+        layoutArticles.addWidget(scroll, stretch=12)
         layoutArticles.addWidget(self.listeArticlesrecherche, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft, stretch=1)
-        layoutArticles.addWidget(self.articlesBox, stretch=12)
 
 
 
