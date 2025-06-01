@@ -56,8 +56,18 @@ class VueAdmin(QtWidgets.QWidget):
 
 
         # Charger les données
-        path = "../liste_produits.csv"
-        loader = lp.csvLoader(path)
+        try:
+            path = "../liste_produits.csv"
+            loader = lp.csvLoader(path)
+        except FileNotFoundError:
+            try:
+                path = "liste_produits.csv"
+                loader = lp.csvLoader(path)
+            except FileNotFoundError:
+                print("Erreur : aucun fichier produits trouvé.")
+                loader = None
+
+
         produits = loader.extract_all()
 
         categories = produits[0]
