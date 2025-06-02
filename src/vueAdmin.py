@@ -61,7 +61,7 @@ class VueAdmin(QtWidgets.QWidget):
             loader = lp.csvLoader(path)
         except FileNotFoundError:
             try:
-                path = "liste_produits.csv"
+                path = "..\liste_produits.csv"
                 loader = lp.csvLoader(path)
             except FileNotFoundError:
                 print("Erreur : aucun fichier produits trouvé.")
@@ -171,7 +171,7 @@ class VueAdmin(QtWidgets.QWidget):
             plan = QPixmap(path)
         except FileNotFoundError:
             try:
-                path = "plan_magasin.jpg"
+                path = "..\plan_magasin.jpg"
                 plan = QPixmap(path)
                 
             except FileNotFoundError:
