@@ -284,27 +284,92 @@ class DropArea(QtWidgets.QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
-        self.setPixmap(QPixmap("../plan_magasin.jpg").transformed(QTransform().rotate(90)))
+        
+        # Création du conteneur principal avec layout
+        self.container = QtWidgets.QWidget(self)
+        self.containerLayout = QtWidgets.QVBoxLayout(self)  # Create layout for self
+        self.containerLayout.setContentsMargins(0, 0, 0, 0)
+        self.container.setGeometry(0, 0, 760, 900)  # Même taille que l'image
+        self.container.setAttribute(QtCore.Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # Création de la grille
+        self.grid = QtWidgets.QGridLayout()  # Create grid without parent
+        self.grid.setSpacing(0)  # Pas d'espacement entre les cellules
+        self.grid.setContentsMargins(0, 0, 0, 0)
+        
+        # Création d'une grille 10x10
+        self.rows = 10
+        self.cols = 10
+        for i in range(self.rows):
+            for j in range(self.cols):
+                cell = QtWidgets.QLabel()
+                cell.setStyleSheet("""
+                    background-color: rgba(255, 255, 255, 0.5);
+                    border: 2px solid #000;
+                """)
+                cell.setMinimumSize(76, 90)
+                self.grid.addWidget(cell, i, j)
+
+        # Chargement de l'image
+        try:
+            path = "../plan_magasin.jpg"
+            plan = QPixmap(path)
+        except FileNotFoundError:
+            try:
+                path = "..\plan_magasin.jpg"
+                plan = QPixmap(path)
+            except FileNotFoundError:
+                print("Erreur : aucun plan de magazin trouvé.")
+                plan = QPixmap(760, 900)
+        
+        # Rotation et application de l'image
+        plan = plan.transformed(QTransform().rotate(90))
+        self.setPixmap(plan)
         self.setScaledContents(True)
         self.setMaximumSize(760, 900)
-        self.setStyleSheet("margin-left: 160px; margin-bottom: 100px")
+        
+        # Add container to the main layout and grid to container
+        self.containerLayout.addWidget(self.container)
+        self.container.setLayout(self.grid)
+        
+    def dropEvent(self, event):
+        # Récupération de la position de dépôt
+        pos = event.position().toPoint()
+        
+        # Calcul de la cellule correspondante
+        cell_width = self.width() / self.cols
+        cell_height = self.height() / self.rows
+        
+        row = int(pos.y() / cell_height)
+        col = int(pos.x() / cell_width)
+        
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            produit = event.mimeData().text()
+            
+            # Création du label pour l'article
+            label = QtWidgets.QLabel(produit)
+            label.setStyleSheet("""
+                background-color: rgba(85, 85, 85, 0.8); 
+                color: white; 
+                padding: 5px; 
+                border-radius: 3px;
+                """)
+            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            
+            # Ajout de l'article dans la cellule
+            item = self.grid.itemAtPosition(row, col)
+            if item is not None:
+                old_widget = item.widget()
+                if old_widget is not None:
+                    old_widget.deleteLater()
+            
+            self.grid.addWidget(label, row, col)
+            
+        event.acceptProposedAction()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
             event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        produit = event.mimeData().text()
-        print(f"[DROP] Produit déposé : {produit}")
-
-        # Option visuelle : afficher un petit label sur la zone
-        label = QtWidgets.QLabel(produit, self)
-        label.move(event.position().toPoint())  # Qt 6.0+
-        label.setStyleSheet("background-color: #555; color: white; padding: 2px; border-radius: 2px;")
-        label.adjustSize()
-        label.show()
-
-        event.acceptProposedAction()
 
 
 
