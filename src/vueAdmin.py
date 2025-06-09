@@ -61,7 +61,7 @@ class VueAdmin(QtWidgets.QWidget):
             loader = lp.csvLoader(path)
         except FileNotFoundError:
             try:
-                path = "..\liste_produits.csv"
+                path = r"..\liste_produits.csv"
                 loader = lp.csvLoader(path)
             except FileNotFoundError:
                 print("Erreur : aucun fichier produits trouvé.")
@@ -138,18 +138,16 @@ class VueAdmin(QtWidgets.QWidget):
 
 
     def create_partieDroite(self):
-        # Paramètres de la partie droite
         self.partieDroite = QtWidgets.QWidget(self)
         self.partieDroite.setStyleSheet("background-color: #232323;")
-        
         layout = QtWidgets.QVBoxLayout(self.partieDroite)
 
-        # Header avec label et champ de texte
+        # Header
         header = QtWidgets.QWidget(self.partieDroite)
         layoutHeader = QtWidgets.QHBoxLayout(header)
         layoutHeader.setContentsMargins(10, 10, 10, 10)
         layoutHeader.setSpacing(10)
-        
+
         self.label = QtWidgets.QLabel("Votre magasin :", self.partieDroite)
         self.label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
         self.label.setStyleSheet("color: white; font-size: 16px;")
@@ -163,43 +161,57 @@ class VueAdmin(QtWidgets.QWidget):
         layoutHeader.addWidget(self.label)
         layoutHeader.addWidget(self.nomMagasin)
 
-        self.labelPlan = DropArea(self.partieDroite)
-        transform = QTransform().rotate(90)
+        # Zone superposée
+        self.zoneSuperposee = QtWidgets.QWidget(self.partieDroite)
+        self.zoneSuperposee.setFixedSize(760, 900)
+        self.zoneSuperposee.setStyleSheet("background-color: transparent;")
 
-        try:
-            path = "../plan_magasin.jpg"
+        self.labelPlan = QtWidgets.QLabel(self.zoneSuperposee)
+        self.labelPlan.setGeometry(0, 0, 760, 900)
+
+        transform = QTransform().rotate(90)
+        path = "../plan_magasin.jpg"
+        plan = QPixmap(path)
+        if plan.isNull():
+            path = "..\\plan_magasin.jpg"
             plan = QPixmap(path)
-        except FileNotFoundError:
-            try:
-                path = "..\plan_magasin.jpg"
-                plan = QPixmap(path)
-                
-            except FileNotFoundError:
-                print("Erreur : aucun plan de magazin trouvé.")
-                loader = None
+        if plan.isNull():
+            print("Erreur : aucun plan de magazin trouvé.")
+            plan = QPixmap(760, 900)
 
         plan = plan.transformed(transform)
         self.labelPlan.setPixmap(plan)
         self.labelPlan.setScaledContents(True)
         self.labelPlan.setMaximumSize(760, 900)
-        self.labelPlan.setStyleSheet("margin-left: 160px; margin-bottom: 100px")
+        self.labelPlan.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.labelPlan.setStyleSheet("background-color: transparent;")
 
-    
+        # Grille par-dessus
+        self.labelsGrille = QtWidgets.QWidget(self.zoneSuperposee)
+        self.labelsGrille.setStyleSheet("background-color: transparent;")
+
+        displayed_width = self.labelPlan.width()
+        displayed_height = self.labelPlan.height()
+        self.labelsGrille.setGeometry(self.labelPlan.geometry())
+        self.labelsGrille.resize(displayed_width, displayed_height)
+
+        rows, cols = 52, 35
+        cell_width = displayed_width / cols
+        cell_height = displayed_height / rows
+
+        for i in range(rows):
+            for j in range(cols):
+                cell = DropArea(self.labelsGrille)
+                x = int(j * cell_width)
+                y = int(i * cell_height)
+                width = int(cell_width) if j < cols - 1 else (displayed_width - int(j * cell_width))
+                height = int(cell_height) if i < rows - 1 else (displayed_height - int(i * cell_height))
+                cell.setGeometry(x, y, width, height)
+                cell.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
 
         layout.addWidget(header, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(self.labelPlan)
-
+        layout.addWidget(self.zoneSuperposee, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.partieDroite, stretch=1)
-
-
-
-
-
-    def clear_layout(self, layout):
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
 
 
 
@@ -231,6 +243,14 @@ class VueAdmin(QtWidgets.QWidget):
         self.articlesBox.adjustSize()
         self.articlesBox.update()
 
+
+
+
+    def clear_layout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
 
 
 
@@ -284,10 +304,8 @@ class DropArea(QtWidgets.QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
-        self.setPixmap(QPixmap("../plan_magasin.jpg").transformed(QTransform().rotate(90)))
-        self.setScaledContents(True)
-        self.setMaximumSize(760, 900)
-        self.setStyleSheet("margin-left: 160px; margin-bottom: 100px")
+        self.setStyleSheet("background-color: transparent;")
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
@@ -296,14 +314,8 @@ class DropArea(QtWidgets.QLabel):
     def dropEvent(self, event):
         produit = event.mimeData().text()
         print(f"[DROP] Produit déposé : {produit}")
-
-        # Option visuelle : afficher un petit label sur la zone
-        label = QtWidgets.QLabel(produit, self)
-        label.move(event.position().toPoint())  # Qt 6.0+
-        label.setStyleSheet("background-color: #555; color: white; padding: 2px; border-radius: 2px;")
-        label.adjustSize()
-        label.show()
-
+        self.setText(produit)
+        self.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
         event.acceptProposedAction()
 
 
