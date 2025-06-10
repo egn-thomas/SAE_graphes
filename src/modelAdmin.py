@@ -7,12 +7,17 @@ class MagasinModel:
     
     def __init__(self):
         self.nom_magasin = ""
+        self.nom_auteur = ""
+
         self.nb_colonnes = 35
         self.nb_lignes = 52
+
         self.produits_par_categorie = {}
-        self.grille_produits = {}  # Position -> nom_produit
         self.categories = []
         self.liste_produits = []
+
+        self.case = (str, bool, [])
+        self.plan = []
         
     def charger_produits(self, csv_path=None):
         """Charge les produits depuis le fichier CSV"""

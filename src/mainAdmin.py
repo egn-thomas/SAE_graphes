@@ -6,7 +6,7 @@ from controllerAdmin import MagasinController
 def main():
     app = QApplication(sys.argv)
     controller = MagasinController()
-    controller.view.show()
+    controller.vue.show()
     sys.exit(app.exec())
 
 
