@@ -34,7 +34,7 @@ class VueAdmin(QtWidgets.QWidget):
             categories = []
             liste_produits = []
 
-        # Création de l'instance Magasin
+        # Création du Magasin
         self.magasin = Magasin(
             nom=nom_magasin,
             path_plan_magasin=plan_path,
@@ -177,7 +177,6 @@ class VueAdmin(QtWidgets.QWidget):
 
         if plan.isNull():
             print(f"Erreur : l'image n'a pas pu être chargée depuis {self.magasin.path_plan_magasin}")
-            plan = QPixmap(760, 900)  # image vide par défaut
 
         plan = plan.transformed(transform)
         self.labelPlan.setPixmap(plan)
@@ -193,27 +192,37 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_grille()
 
     def create_grille(self):
+        # Cache des valeurs fréquemment utilisées
+        geometry = self.labelPlan.geometry()
+        displayed_width = geometry.width()
+        displayed_height = geometry.height()
+        
         # Supprimer l'ancienne grille si elle existe
         if hasattr(self, 'labelsGrille'):
             self.labelsGrille.deleteLater()
 
-        # Grille par-dessus
+        # Création de la grille
         self.labelsGrille = QtWidgets.QWidget(self.zoneSuperposee)
         self.labelsGrille.setStyleSheet("background-color: transparent;")
-
-        displayed_width = self.labelPlan.width()
-        displayed_height = self.labelPlan.height()
-        self.labelsGrille.setGeometry(self.labelPlan.geometry())
-        self.labelsGrille.resize(displayed_width, displayed_height)
-
+        self.labelsGrille.setGeometry(geometry)
+        
+        # Cache des dimensions
         rows, cols = self.magasin.nb_lignes, self.magasin.nb_colonnes
         cell_width = displayed_width / cols
         cell_height = displayed_height / rows
 
+        def get_column_name(index):
+            result = ""
+            while index >= 0:
+                index, temp = divmod(index, 26)
+                result = chr(65 + temp) + result
+                index -= 1
+            return result
+
         for i in range(rows):
             for j in range(cols):
-                cell = DropArea(self.labelsGrille, self.magasin, self)  # Passer self comme parent VueAdmin
-                coord = f"{chr(65 + j)}{i + 1}"  # A1, B2, etc.
+                cell = DropArea(self.labelsGrille, self.magasin, self)
+                coord = f"{get_column_name(j)}{i + 1}"
                 cell.coord = coord
                 cell.ligne = i
                 cell.colonne = j
@@ -228,8 +237,7 @@ class VueAdmin(QtWidgets.QWidget):
                 cell.setGeometry(x, y, width, height)
                 cell.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
 
-    def mettre_a_jour_affichage_produits(self):
-        """Met à jour l'affichage de la liste des produits avec leurs coordonnées"""
+    def affichage_produits(self):
         # Vider le layout existant
         while self.layoutProduits.count():
             child = self.layoutProduits.takeAt(0)
@@ -266,7 +274,7 @@ class VueAdmin(QtWidgets.QWidget):
     def sauvegarder_automatique(self):
         """Sauvegarde automatique du magasin"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        chemin = os.path.join(script_dir, "..", f"{self.magasin.nom.replace(' ', '_')}_config.json")
+        chemin = os.path.join(script_dir, "..", f"{self.magasin.nom.replace(' ', '_')}.json")
         try:
             self.magasin.sauvegarder(chemin)
         except Exception as e:
@@ -352,7 +360,7 @@ class DraggableLabel(QtWidgets.QLabel):
 
             pixmap = self.grab()
             drag.setPixmap(pixmap)
-            drag.setHotSpot(event.pos())
+            drag.setHotSpot(QtCore.QPoint(0, 0))
 
             drag.exec(QtCore.Qt.DropAction.MoveAction)
 
@@ -492,9 +500,7 @@ if __name__ == "__main__":
     window = VueAdmin(
         nom_magasin="Projet 1",
         nb_lignes=52,
-        nb_colonnes=35,
-        # csv_path="chemin/vers/produits.csv",  # Optionnel
-        # plan_path="chemin/vers/plan.jpg"      # Optionnel
+        nb_colonnes=35
     )
     
     window.show()

@@ -31,21 +31,6 @@ class Magasin:
                 coord = f"{chr(65 + j)}{i + 1}"  # Exemple : A1, B2, etc.
                 self.coord_to_cell[coord] = None
 
-    # Méthodes pour marquer les zones et gérer les produits :
-    def definir_passage(self, coord):
-        self.cases_passage.add(coord)
-        self.cases_rayon.discard(coord)
-
-    def definir_rayon(self, coord):
-        self.cases_rayon.add(coord)
-        self.cases_passage.discard(coord)
-
-    def est_passage(self, coord):
-        return coord in self.cases_passage
-
-    def est_rayon(self, coord):
-        return coord in self.cases_rayon
-
     def enregistrer_produit(self, coord, produit):
         if coord not in self.coord_produits:
             self.coord_produits[coord] = []
