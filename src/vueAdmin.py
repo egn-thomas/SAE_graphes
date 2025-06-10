@@ -336,7 +336,7 @@ class DraggableLabel(QtWidgets.QLabel):
             drag.setPixmap(pixmap)
             drag.setHotSpot(event.pos())
 
-            drag.exec(QtCore.Qt.DropAction.MoveAction)
+            drag.exec(QtCore.Qt.DropAction.CopyAction)
 
 
 
@@ -455,15 +455,19 @@ class DropArea(QtWidgets.QLabel):
         # Mémoriser la vignette
         self.popup_actuelle = vignette
         self.cellule_popup_actuelle = cellule_cliquee   
-    
+
     def enregistrer_produit(self, produit):
         """Enregistre le produit déposé dans le CSV avec les coordonnées.
-           Les coordonnées X (colonne) et Y (ligne) sont sauvegardées,
-           ainsi qu'une 'Position' formée de leur concaténation (ex: AA1)."""
-        with open("disposition_magasin.csv", "a", newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile, delimiter=';')
-            writer.writerow([produit, self.colonne, self.ligne, f"{self.colonne}{self.ligne}"])
-        print(f"✅ Produit {produit} enregistré dans {self.colonne}{self.ligne}")
+       Les coordonnées X (colonne) et Y (ligne) sont sauvegardées,
+       ainsi qu'une 'Position' formée de leur concaténation (ex: AA1)."""
+        try:
+            with open("disposition_magasin.csv", "a", newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow([produit, self.colonne, self.ligne, f"{self.colonne}{self.ligne}"])
+            print(f"✅ Produit {produit} enregistré dans {self.colonne}{self.ligne}")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
+
     
 if __name__ == "__main__":
     app = QApplication(sys.argv)
