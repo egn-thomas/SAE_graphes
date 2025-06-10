@@ -3,7 +3,7 @@ from PyQt6.QtGui import QPixmap, QTransform
 from graphe import Graphe
 from droparea import DropArea
 import os
-
+import csv
 
 class VueAdmin(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
@@ -30,6 +30,12 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partie_droite()
         
         self.connecter_signaux()
+
+        # Initialiser le fichier de sauvegarde s'il n'existe pas.
+        self.initialiser_sauvegarde()
+        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
+        
+        self.charger_sauvegarde()
 
         self.popup_actuelle = None
     
@@ -287,7 +293,52 @@ class VueAdmin(QtWidgets.QWidget):
         for (i, j), drop_area in self.graphe.cellules_graphiques.items():
             drop_area.placer_produit.connect(self.on_placer_produit)
             self.cellules_grille[(i, j)] = drop_area
-    
+        
+        geometry = self.label_plan.geometry()
+        displayed_width = geometry.width()
+        displayed_height = geometry.height()
+        
+        # Supprimer l'ancienne grille si elle existe
+        if hasattr(self, 'labelsGrille'):
+            self.labelsGrille.deleteLater()
+
+        # Création de la grille
+        self.labelsGrille = QtWidgets.QWidget(self.zone_superposee)
+        self.labelsGrille.setStyleSheet("background-color: transparent;")
+        self.labelsGrille.setGeometry(geometry)
+        
+        # Cache des dimensions
+        rows, cols = self.magasin.nb_lignes, self.magasin.nb_colonnes
+        cell_width = displayed_width / cols
+        cell_height = displayed_height / rows
+
+
+        def get_column_name(index):
+            result = ""
+            while index >= 0:
+                index, temp = divmod(index, 26)
+                result = chr(65 + temp) + result
+                index -= 1
+            return result
+
+        for i in range(rows):
+            for j in range(cols):
+                cell = DropArea(self.labelsGrille, self.magasin, self)  # Passer self comme parent VueAdmin
+                # Calcul de la coordonnée textuelle:
+                cell.colonne = chr(65 + j)   # Conserve la lettre (ex: j=26 -> '[')
+                cell.ligne = i + 1           # Numérotation à partir de 1 (ex: i=17 -> '18')
+                cell.coord = f"{cell.colonne}{cell.ligne}"  # Par exemple, "[18"
+                
+                # Affecter la cellule au magasin
+                self.magasin.affecter_cellule(cell.coord, cell)
+
+                x = int(j * cell_width)
+                y = int(i * cell_height)
+                width = int(cell_width) if j < cols - 1 else (displayed_width - int(j * cell_width))
+                height = int(cell_height) if i < rows - 1 else (displayed_height - int(i * cell_height))
+                cell.setGeometry(x, y, width, height)
+                cell.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
+                
     def connecter_signaux(self):
         """Connecte les signaux internes"""
         # Synchronisation spin/slider
@@ -360,7 +411,47 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.setText("")
             cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
 
+    def initialiser_sauvegarde(self):
+        """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
+        if not os.path.exists("disposition_magasin.csv"):
+            print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du produit", "X", "Y", "Position"])
 
+    def charger_sauvegarde(self):
+        """Charge la sauvegarde du magasin et place les produits dans leur case."""
+        try:
+            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+                print("ouverture d'un fichier de sauvegarde")
+                reader = csv.reader(csvfile, delimiter=';')
+                header = next(reader, None)  # Ignorer l'en-tête
+                for row in reader:
+                    if len(row) < 4:
+                        continue
+                    produit, colonne, ligne, position = row
+                    self.placer_produit_dans_grille(produit, colonne, ligne, position)
+        except FileNotFoundError:
+            print("⚠ Aucun fichier de sauvegarde trouvé.")
+
+    def placer_produit_dans_grille(self, produit, colonne, ligne, position):
+        """Parcourt les cellules du quadrillage pour placer le produit sauvegardé."""
+        #recherche tous les widgets DropArea dans la grille
+        for cell in self.labelsGrille.findChildren(DropArea):
+            # Si la cellule possède des attributs correspondant à la position sauvegardée
+            if cell.colonne == colonne and str(cell.ligne) == str(ligne):
+                cell.setText(produit)
+                cell.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
+                # Mettre à jour le dictionnaire des articles de la cellule
+                cellule = (cell.ligne, cell.colonne)
+                if cellule not in cell.articles_par_cellule:
+                    cell.articles_par_cellule[cellule] = []
+                    if produit not in cell.articles_par_cellule[cellule]:
+                        cell.articles_par_cellule[cellule].append(produit)
+                        print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
+                        break
+                    
+                    
 class DraggableLabel(QtWidgets.QLabel):
     """Label draggable pour les produits"""
     
