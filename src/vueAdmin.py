@@ -4,8 +4,6 @@ from PyQt6.QtWidgets import QApplication
 import sys
 import os
 import listeProduit as lp
-from pathlib import Path
-
 
 
 
@@ -112,22 +110,82 @@ class VueAdmin(QtWidgets.QWidget):
 
         self.labelTableauBord = QtWidgets.QLabel("Réglages du magasin", self.tableauDeBord)
         
-        self.spinTableauBord = QtWidgets.QSpinBox(self.tableauDeBord)
-        self.spinTableauBord.setRange(0, 4)
-        self.spinTableauBord.setStyleSheet("max-width: 50px;")
-        
-        self.curseurTableauBord = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
-        self.curseurTableauBord.setRange(0, 4)
-        self.curseurTableauBord.setStyleSheet("margin-bottom: 40px; max-width: 200px;")
+        # Colonnes (SpinBox + Label) 
+        layoutColonnes = QtWidgets.QHBoxLayout()
+        self.spinTableauBordColonnes = QtWidgets.QSpinBox(self.tableauDeBord)
+        self.spinTableauBordColonnes.setRange(0, 50)
+        self.spinTableauBordColonnes.setStyleSheet("max-width: 70px;")
+        labelColonnes = QtWidgets.QLabel("Nombre de colonnes visibles", self.tableauDeBord)
+
+        layoutColonnes.addWidget(self.spinTableauBordColonnes)
+        layoutColonnes.addWidget(labelColonnes)
+
+        # Slider Colonnes
+        self.curseurTableauBordColonnes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
+        self.curseurTableauBordColonnes.setRange(0, 50)
+        self.curseurTableauBordColonnes.setStyleSheet("margin-bottom: 40px; max-width: 400px;")
+
+        # Lignes (SpinBox + Label)
+        layoutLignes = QtWidgets.QHBoxLayout()
+        self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableauDeBord)
+        self.spinTableauBordLignes.setRange(0, 60)
+        self.spinTableauBordLignes.setStyleSheet("max-width: 70px;")
+        labelLignes = QtWidgets.QLabel("Nombre de lignes visibles", self.tableauDeBord)
+
+        layoutLignes.addWidget(self.spinTableauBordLignes)
+        layoutLignes.addWidget(labelLignes)
+
+        # Slider Lignes 
+        self.curseurTableauBordLignes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
+        self.curseurTableauBordLignes.setRange(0, 60)
+        self.curseurTableauBordLignes.setStyleSheet("margin-bottom: 40px; max-width: 400px;")
+
+        self.spinTableauBordColonnes.setValue(35)
+        self.spinTableauBordLignes.setValue(52)
+
+        self.spinTableauBordColonnes.valueChanged.connect(self.curseurTableauBordColonnes.setValue)
+        self.curseurTableauBordColonnes.valueChanged.connect(self.spinTableauBordColonnes.setValue)
+        self.spinTableauBordLignes.valueChanged.connect(self.curseurTableauBordLignes.setValue)
+        self.curseurTableauBordLignes.valueChanged.connect(self.spinTableauBordLignes.setValue)
+
+        # Ajout d'un layout horizontal pour les boutons
+        layoutBoutons = QtWidgets.QHBoxLayout()
+        layoutBoutons.setContentsMargins(10, 10, 10, 10)
+
+        # Ajout des boutons pour ouvrir, sauvegarder et effacer le projet.
+        self.boutonOuvrir = QtWidgets.QPushButton("Ouvrir", self.tableauDeBord)
+        self.boutonOuvrir.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.boutonOuvrir.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
+        self.boutonOuvrir.setMaximumWidth(200)
+        self.boutonOuvrir.setMaximumHeight(50)
+        self.bouotonSauvegarder = QtWidgets.QPushButton("Sauvegarder", self.tableauDeBord)
+        self.bouotonSauvegarder.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.bouotonSauvegarder.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
+        self.bouotonSauvegarder.setMaximumWidth(200)
+        self.bouotonSauvegarder.setMaximumHeight(50)
+        self.boutonEffacer = QtWidgets.QPushButton("Effacer", self.tableauDeBord)
+        self.boutonEffacer.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        self.boutonEffacer.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
+        self.boutonEffacer.setMaximumWidth(200)
+        self.boutonEffacer.setMaximumHeight(50)
+
+        # Ajout des boutons au layout
+        layoutBoutons.addWidget(self.boutonOuvrir)
+        layoutBoutons.addWidget(self.bouotonSauvegarder)
+        layoutBoutons.addWidget(self.boutonEffacer)
+
 
         layoutTableauBord.addWidget(self.labelTableauBord)
-        layoutTableauBord.addWidget(self.spinTableauBord)
-        layoutTableauBord.addWidget(self.curseurTableauBord)
+        layoutTableauBord.addLayout(layoutColonnes)
+        layoutTableauBord.addWidget(self.curseurTableauBordColonnes)
+        layoutTableauBord.addLayout(layoutLignes)
+        layoutTableauBord.addWidget(self.curseurTableauBordLignes)
+        layoutTableauBord.addLayout(layoutBoutons)
 
 
 
         # Ajout des widgets à la partie gauche
-        layout.addWidget(self.listeArticles, stretch=4)
+        layout.addWidget(self.listeArticles, stretch=2)
         layout.addWidget(self.tableauDeBord, stretch=1)
         
         self.layout.addWidget(self.partieGauche, stretch=1)
