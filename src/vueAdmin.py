@@ -1,11 +1,9 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox, QDialog, QListWidget, QPushButton, QVBoxLayout
 import sys
 import os
 import listeProduit as lp
-from pathlib import Path
-
 
 
 
@@ -307,6 +305,12 @@ class DropArea(QtWidgets.QLabel):
         self.setAcceptDrops(True)
         self.setStyleSheet("background-color: transparent;")
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        
+        # Initialiser les attributs nécessaires pour la popup
+        self.popup_actuelle = None
+        self.articles_par_cellule = {} 
+        self.ligne = 0
+        self.colonne = 0  
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
@@ -317,12 +321,60 @@ class DropArea(QtWidgets.QLabel):
         print(f"[DROP] Produit déposé : {produit}")
         self.setText(produit)
         self.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
+        
+        # Ajouter le produit à la liste des articles de cette cellule
+        cellule = (self.ligne, self.colonne)
+        if cellule not in self.articles_par_cellule:
+            self.articles_par_cellule[cellule] = []
+        if produit not in self.articles_par_cellule[cellule]:
+            self.articles_par_cellule[cellule].append(produit)
+        
         event.acceptProposedAction()
 
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            self.creer_ou_fermer_popup(self.ligne, self.colonne)
+
+    def creer_ou_fermer_popup(self, ligne, colonne):
+        cellule_cliquee = (ligne, colonne)
+
+        # Si une popup est déjà ouverte sur cette cellule, on la ferme
+        if self.popup_actuelle and hasattr(self, "cellule_popup_actuelle") and self.cellule_popup_actuelle == cellule_cliquee:
+            self.popup_actuelle.close()
+            self.popup_actuelle = None
+            self.cellule_popup_actuelle = (-1, -1)
+            return
+
+        # Fermer l'ancienne popup si une autre était ouverte
+        if self.popup_actuelle:
+            self.popup_actuelle.close()
+            self.popup_actuelle = None
+
+        # Récupérer les articles de la cellule
+        articles = self.articles_par_cellule.get(cellule_cliquee, [])
+
+        if not articles:
+            QMessageBox.information(self, "Articles", "Aucun article dans cette case.")
+            return
+
+        # Créer une nouvelle popup
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Articles de la case ({ligne}, {colonne})")
+        layout = QVBoxLayout(dialog)
+
+        liste_widget = QListWidget()
+        liste_widget.addItems(articles)
+        layout.addWidget(liste_widget)
 
 
+        dialog.setLayout(layout)
+        dialog.show()
 
-
+        # Mémoriser la popup
+        self.popup_actuelle = dialog
+        self.cellule_popup_actuelle = cellule_cliquee
+        
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = VueAdmin()
