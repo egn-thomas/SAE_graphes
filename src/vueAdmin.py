@@ -297,8 +297,6 @@ class DraggableLabel(QtWidgets.QLabel):
 
 
 
-
-
 class DropArea(QtWidgets.QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -308,9 +306,9 @@ class DropArea(QtWidgets.QLabel):
         
         # Initialiser les attributs nécessaires pour la popup
         self.popup_actuelle = None
-        self.articles_par_cellule = {} 
-        self.ligne = 0
-        self.colonne = 0  
+        self.articles_par_cellule = {}  # Dictionnaire pour stocker les articles par cellule
+        self.ligne = 0  # Position de la cellule
+        self.colonne = 0  # Position de la cellule
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
@@ -338,42 +336,80 @@ class DropArea(QtWidgets.QLabel):
     def creer_ou_fermer_popup(self, ligne, colonne):
         cellule_cliquee = (ligne, colonne)
 
-        # Si une popup est déjà ouverte sur cette cellule, on la ferme
+        # Si une vignette est déjà ouverte sur cette cellule, on la ferme
         if self.popup_actuelle and hasattr(self, "cellule_popup_actuelle") and self.cellule_popup_actuelle == cellule_cliquee:
-            self.popup_actuelle.close()
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
             self.popup_actuelle = None
             self.cellule_popup_actuelle = (-1, -1)
             return
 
-        # Fermer l'ancienne popup si une autre était ouverte
+        # Fermer l'ancienne vignette si une autre était ouverte
         if self.popup_actuelle:
-            self.popup_actuelle.close()
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
             self.popup_actuelle = None
 
         # Récupérer les articles de la cellule
         articles = self.articles_par_cellule.get(cellule_cliquee, [])
 
         if not articles:
-            QMessageBox.information(self, "Articles", "Aucun article dans cette case.")
             return
 
-        # Créer une nouvelle popup
-        dialog = QDialog(self)
-        dialog.setWindowTitle(f"Articles de la case ({ligne}, {colonne})")
-        layout = QVBoxLayout(dialog)
+        # Créer une nouvelle vignette
+        vignette = QtWidgets.QWidget(self.parent())
+        vignette.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint | QtCore.Qt.WindowType.Tool)
+        vignette.setAttribute(QtCore.Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        vignette.setStyleSheet("""
+            QWidget {
+                background-color: #404040;
+                border: 2px solid #666;
+                border-radius: 8px;
+                color: white;
+            }
+            QLabel {
+                color: white;
+                padding: 3px;
+                margin: 2px;
+                background-color: #333;
+                border-radius: 3px;
+            }
+        """)
 
-        liste_widget = QListWidget()
-        liste_widget.addItems(articles)
-        layout.addWidget(liste_widget)
+        layout = QtWidgets.QVBoxLayout(vignette)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(2)
 
 
-        dialog.setLayout(layout)
-        dialog.show()
+        # Ajouter chaque article
+        for article in articles:
+            label_article = QtWidgets.QLabel(article)
+            label_article.setWordWrap(True)
+            layout.addWidget(label_article)
 
-        # Mémoriser la popup
-        self.popup_actuelle = dialog
-        self.cellule_popup_actuelle = cellule_cliquee
+        # Calculer la position de la vignette à côté de la case
+        pos_cellule = self.pos()
+        pos_parent = self.parent().mapToGlobal(QtCore.QPoint(0, 0))
         
+        vignette_x = pos_parent.x() + pos_cellule.x() + self.width() + 5
+        vignette_y = pos_parent.y() + pos_cellule.y()
+        
+        # Ajuster la taille de la vignette selon le contenu
+        vignette.adjustSize()
+        vignette.setMinimumWidth(150)
+        vignette.setMaximumWidth(250)
+        
+        # Vérifier que la vignette ne sorte pas de l'écran
+        screen_geometry = QtWidgets.QApplication.primaryScreen().geometry()
+        if vignette_x + vignette.width() > screen_geometry.width():
+            vignette_x = pos_parent.x() + pos_cellule.x() - vignette.width() - 5
+        
+        vignette.move(vignette_x, vignette_y)
+        vignette.show()
+
+        # Mémoriser la vignette
+        self.popup_actuelle = vignette
+        self.cellule_popup_actuelle = cellule_cliquee   
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
