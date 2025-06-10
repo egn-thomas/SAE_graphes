@@ -360,6 +360,7 @@ class DropArea(QtWidgets.QLabel):
         produit = event.mimeData().text()
         print(f"[DROP] Produit déposé : {produit}")
         self.setText(produit)
+        self.produit_place.emit(self.ligne, self.colonne, produit)
         self.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
         
         # Ajouter le produit à la liste des articles de cette cellule
