@@ -1,0 +1,9 @@
+{
+  "nom": "SuperMarch\u00e9 Central",
+  "image_path": "/home/timeo-doffagne/Documents/GitHub/SAE_graphes/src/../plan_magasin.jpg",
+  "nb_colonnes": 35,
+  "nb_lignes": 52,
+  "cases_passage": [],
+  "cases_rayon": [],
+  "coord_produits": {}
+}
