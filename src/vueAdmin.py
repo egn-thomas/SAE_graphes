@@ -5,7 +5,7 @@ import sys
 import os
 import listeProduit as lp
 from magasin import Magasin
-
+import csv
 
 class VueAdmin(QtWidgets.QWidget):
     def __init__(self, nom_magasin="Mon Magasin", nb_lignes=52, nb_colonnes=35, csv_path=None, plan_path=None):
@@ -57,6 +57,52 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partieGauche()
         self.create_partieDroite()
 
+        # Initialiser le fichier de sauvegarde s'il n'existe pas.
+        self.initialiser_sauvegarde()
+        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
+        self.charger_sauvegarde()
+    
+    def initialiser_sauvegarde(self):
+        """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
+        if not os.path.exists("disposition_magasin.csv"):
+            print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du produit", "X", "Y", "Position"])
+
+    def charger_sauvegarde(self):
+        """Charge la sauvegarde du magasin et place les produits dans leur case."""
+        try:
+            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+                print("ouverture d'un fichier de sauvegarde")
+                reader = csv.reader(csvfile, delimiter=';')
+                header = next(reader, None)  # Ignorer l'en-tête
+                for row in reader:
+                    if len(row) < 4:
+                        continue
+                    produit, colonne, ligne, position = row
+                    self.placer_produit_dans_grille(produit, colonne, ligne, position)
+        except FileNotFoundError:
+            print("⚠ Aucun fichier de sauvegarde trouvé.")
+
+    def placer_produit_dans_grille(self, produit, colonne, ligne, position):
+        """Parcourt les cellules du quadrillage pour placer le produit sauvegardé."""
+        # On recherche tous les widgets DropArea dans la zone de superposition (grille)
+        for cell in self.labelsGrille.findChildren(DropArea):
+            # Si la cellule possède des attributs correspondant à la position sauvegardée
+            if cell.colonne == colonne and str(cell.ligne) == str(ligne):
+                cell.setText(produit)
+                cell.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
+                # Mettre à jour le dictionnaire des articles de la cellule
+                cellule = (cell.ligne, cell.colonne)
+                if cellule not in cell.articles_par_cellule:
+                    cell.articles_par_cellule[cellule] = []
+                    if produit not in cell.articles_par_cellule[cellule]:
+                        cell.articles_par_cellule[cellule].append(produit)
+                        print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
+                        break
+
+            
     def create_partieGauche(self):
         # Paramètres de la partie gauche
         self.partieGauche = QtWidgets.QWidget(self)
@@ -212,15 +258,15 @@ class VueAdmin(QtWidgets.QWidget):
 
         for i in range(rows):
             for j in range(cols):
-                cell = DropArea(self.labelsGrille, self.magasin, self)  # Passer self comme parent VueAdmin
-                coord = f"{chr(65 + j)}{i + 1}"  # A1, B2, etc.
-                cell.coord = coord
-                cell.ligne = i
-                cell.colonne = j
-                
+                cell = DropArea(self.labelsGrille, self.magasin, self)  # On passe les références nécessaires
+                # Calcul de la coordonnée textuelle:
+                cell.colonne = chr(65 + j)   # Conserve la lettre (ex: j=26 -> '[')
+                cell.ligne = i + 1           # Numérotation à partir de 1 (ex: i=17 -> '18')
+                cell.coord = f"{cell.colonne}{cell.ligne}"  # Par exemple, "[18"
+        
                 # Affecter la cellule au magasin
-                self.magasin.affecter_cellule(coord, cell)
-                
+                self.magasin.affecter_cellule(cell.coord, cell)
+
                 x = int(j * cell_width)
                 y = int(i * cell_height)
                 width = int(cell_width) if j < cols - 1 else (displayed_width - int(j * cell_width))
@@ -370,6 +416,7 @@ class DropArea(QtWidgets.QLabel):
         
         # Initialiser les attributs nécessaires pour la popup
         self.popup_actuelle = None
+        self.articles_par_cellule = {}
         self.coord = ""  # Coordonnée de la cellule (ex: "A1")
         self.ligne = 0
         self.colonne = 0
@@ -404,6 +451,7 @@ class DropArea(QtWidgets.QLabel):
         if self.vue_admin:
             self.vue_admin.sauvegarder_automatique()
 
+        self.enregistrer_produit(produit)
         event.acceptProposedAction()
 
     def mousePressEvent(self, event):
@@ -484,7 +532,22 @@ class DropArea(QtWidgets.QLabel):
         # Mémoriser la vignette
         self.popup_actuelle = vignette
 
-
+    def enregistrer_produit(self, produit):
+        """Enregistre le produit déposé dans le CSV avec les coordonnées formatées.
+           On utilise self.colonne (déjà converti en lettre) et self.ligne (en 1-based) pour la position."""
+        try:
+            x = self.colonne  # Par exemple, "[" si self.colonne est déjà une lettre
+            y = str(self.ligne)  # self.ligne doit être déjà au format 1-based (exemple: "18")
+            coord_formatee = f"{x}{y}"
+            with open("disposition_magasin.csv", "a", newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow([produit, x, y, coord_formatee])
+            print(f"Produit {produit} enregistré dans la cellule {coord_formatee}")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
+            # Optionnel : Tu peux utiliser un message via QMessageBox pour alerter l'utilisateur
+        
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     

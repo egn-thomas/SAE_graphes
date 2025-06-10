@@ -1,20 +1,15 @@
 {
   "nom": "Projet 1",
-  "image_path": "/home/timeo-doffagne/Documents/GitHub/SAE_graphes/src/../plan_magasin.jpg",
+  "image_path": "d:\\BUT\\R2\\SAE_GRAPHE\\src\\..\\plan_magasin.jpg",
   "nb_colonnes": 35,
   "nb_lignes": 52,
   "cases_passage": [],
   "cases_rayon": [
-    "P36",
-    "J21"
+    "I5"
   ],
   "coord_produits": {
-    "J21": [
+    "I5": [
       "Cabillaud"
-    ],
-    "P36": [
-      "Hareng fum\u00e9",
-      "Encornet"
     ]
   }
 }
