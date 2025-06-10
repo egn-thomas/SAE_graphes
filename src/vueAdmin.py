@@ -1,5 +1,7 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
+from graphe import Graphe
+from droparea import DropArea
 import os
 
 
@@ -11,7 +13,7 @@ class VueAdmin(QtWidgets.QWidget):
     retour_categories = QtCore.pyqtSignal()
     dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
     nom_magasin_change = QtCore.pyqtSignal(str)
-    produit_place = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
+    placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
 
 
 
@@ -279,25 +281,12 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.deleteLater()
         self.cellules_grille.clear()
         
-        displayed_width = self.labels_grille.width()
-        displayed_height = self.labels_grille.height()
-        cell_width = displayed_width / cols
-        cell_height = displayed_height / rows
+        self.graphe = Graphe(rows, cols, parent=self.labels_grille)
+        self.graphe.afficher_grille(self.labels_grille, rows, cols)
         
-        for i in range(rows):
-            for j in range(cols):
-                cellule = DropArea(self.labels_grille)
-                cellule.produit_place.connect(self.on_produit_place)
-                
-                x = int(j * cell_width)
-                y = int(i * cell_height)
-                width = int(cell_width) if j < cols - 1 else (displayed_width - int(j * cell_width))
-                height = int(cell_height) if i < rows - 1 else (displayed_height - int(i * cell_height))
-                
-                cellule.setGeometry(x, y, width, height)
-                cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
-                
-                self.cellules_grille[(i, j)] = cellule
+        for (i, j), drop_area in self.graphe.cellules_graphiques.items():
+            drop_area.placer_produit.connect(self.on_placer_produit)
+            self.cellules_grille[(i, j)] = drop_area
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
@@ -316,9 +305,9 @@ class VueAdmin(QtWidgets.QWidget):
         """Émet le signal de changement de dimensions"""
         self.dimensions_changees.emit(self.spinTableauBordColonnes.value(), self.spinTableauBordLignes.value())
     
-    def on_produit_place(self, ligne, colonne, produit):
+    def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
-        self.produit_place.emit(ligne, colonne, produit)
+        self.placer_produit.emit(ligne, colonne, produit)
     
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
@@ -395,31 +384,3 @@ class DraggableLabel(QtWidgets.QLabel):
             drag.setHotSpot(event.pos())
             
             drag.exec(QtCore.Qt.DropAction.MoveAction)
-
-
-class DropArea(QtWidgets.QLabel):
-    produit_place = QtCore.pyqtSignal(int, int, str)
-    cellule_cliquee = QtCore.pyqtSignal(int, int)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAcceptDrops(True)
-        self.setStyleSheet("background-color: transparent;")
-        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.ligne = 0
-        self.colonne = 0
-
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        produit = event.mimeData().text()
-        self.setText(produit)
-        self.produit_place.emit(self.ligne, self.colonne, produit)
-        self.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
-        event.acceptProposedAction()
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            self.cellule_cliquee.emit(self.ligne, self.colonne)

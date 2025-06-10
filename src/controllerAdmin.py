@@ -1,6 +1,8 @@
 from PyQt6.QtCore import QObject
 from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
+from cellule import Cellule
+from graphe import Graphe
 
 
 class MagasinController(QObject):
@@ -20,19 +22,19 @@ class MagasinController(QObject):
         self.vue.retour_categories.connect(self.afficher_categories)
         self.vue.dimensions_changees.connect(self.changer_dimensions_grille)
         self.vue.nom_magasin_change.connect(self.changer_nom_magasin)
-        self.vue.produit_place.connect(self.placer_produit)
+        self.vue.placer_produit.connect(self.placer_produit)
         for cellule in self.vue.cellules_grille.values():
-            cellule.produit_place.connect(self.produit_place)
+            cellule.placer_produit.connect(self.placer_produit)
             cellule.cellule_cliquee.connect(self.cellule_cliquee)
 
-    def produit_place(self, ligne, colonne, produit):
-        """Gère le placement d'un produit"""
-        self.model.ajouter_article(ligne, colonne, produit)
-    
     def cellule_cliquee(self, ligne, colonne):
         """Gère le clic sur une cellule"""
         articles = self.model.get_articles_cellule(ligne, colonne)
         self.vue.afficher_popup_articles(ligne, colonne, articles)
+
+    def placer_produit(self, ligne, colonne, produit):
+        """Place un produit dans la grille"""
+        self.model.ajouter_article(ligne, colonne, produit)
     
     def initialiser(self):
         """Initialise l'application avec les données de base"""
