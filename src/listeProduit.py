@@ -14,7 +14,12 @@ class csvLoader :
 #lecture du fichier CSV
 
 if __name__ == "__main__":
-    csv_loader=csvLoader('../liste_produits.csv')
+    try: 
+        csv_loader=csvLoader('../liste_produits.csv')
+    except FileNotFoundError:
+        print("Le fichier liste_produits.csv n'a pas été trouvé. Assurez-vous qu'il est dans le bon répertoire.")
+        exit(1)
+        
     liste_produits= csv_loader.extract_all()
     csv_loader=csvLoader('../Magasin.csv')
     liste_produits_magasin=csv_loader.extract_all()
