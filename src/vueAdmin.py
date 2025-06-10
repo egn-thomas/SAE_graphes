@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QApplication
 import sys
 import os
 import listeProduit as lp
+from pathlib import Path
 
 
 
@@ -56,18 +57,16 @@ class VueAdmin(QtWidgets.QWidget):
 
 
         # Charger les données
-        paths = ["../liste_produits.csv", os.path.join("..", "liste_produits.csv")]
-        loader = None
 
+        paths = [Path("../liste_produits.csv"), Path("..") / "liste_produits.csv"]
+
+        loader = None
         for path in paths:
             try:
-                loader = lp.csvLoader(path)
+                loader = lp.csvLoader(str(path))
                 break
-            except FileNotFoundError:
-                continue
-
-        if loader is None:
-            print("Erreur : aucun fichier produits trouvé.")
+            except FileNotFoundError as e:
+                print(f"Fichier non trouvé : {path} -> {e}")
 
 
         produits = loader.extract_all()
