@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 import sys
 import os
 import listeProduit as lp
-
+import csv
 
 
 
@@ -21,6 +21,49 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partieGauche()
         self.create_partieDroite()
 
+        # Initialiser le fichier de sauvegarde s'il n'existe pas.
+        self.initialiser_sauvegarde()
+        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
+        self.charger_sauvegarde()
+    
+    def initialiser_sauvegarde(self):
+        """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
+        if not os.path.exists("disposition_magasin.csv"):
+            print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du produit", "X", "Y", "Position"])
+
+    def charger_sauvegarde(self):
+        """Charge la sauvegarde du magasin et place les produits dans leur case."""
+        try:
+            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+                reader = csv.reader(csvfile, delimiter=';')
+                header = next(reader, None)  # Ignorer l'en-tête
+                for row in reader:
+                    if len(row) < 4:
+                        continue
+                    produit, colonne, ligne, position = row
+                    self.placer_produit_dans_grille(produit, colonne, ligne, position)
+        except FileNotFoundError:
+            print("⚠ Aucun fichier de sauvegarde trouvé.")
+
+    def placer_produit_dans_grille(self, produit, colonne, ligne, position):
+        """Parcourt les cellules du quadrillage pour placer le produit sauvegardé."""
+        # On recherche tous les widgets DropArea dans la zone de superposition (grille)
+        for cell in self.labelsGrille.findChildren(DropArea):
+            # Si la cellule possède des attributs correspondant à la position sauvegardée
+            if cell.colonne == colonne and str(cell.ligne) == str(ligne):
+                cell.setText(produit)
+                cell.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
+                # Mettre à jour le dictionnaire des articles de la cellule
+                cellule = (cell.ligne, cell.colonne)
+                if cellule not in cell.articles_par_cellule:
+                    cell.articles_par_cellule[cellule] = []
+                if produit not in cell.articles_par_cellule[cellule]:
+                    cell.articles_par_cellule[cellule].append(produit)
+                print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
+                break
    
 
    
@@ -327,6 +370,8 @@ class DropArea(QtWidgets.QLabel):
         if produit not in self.articles_par_cellule[cellule]:
             self.articles_par_cellule[cellule].append(produit)
         
+        self.enregistrer_produit(produit)
+        
         event.acceptProposedAction()
 
     def mousePressEvent(self, event):
@@ -410,7 +455,16 @@ class DropArea(QtWidgets.QLabel):
         # Mémoriser la vignette
         self.popup_actuelle = vignette
         self.cellule_popup_actuelle = cellule_cliquee   
-        
+    
+    def enregistrer_produit(self, produit):
+        """Enregistre le produit déposé dans le CSV avec les coordonnées.
+           Les coordonnées X (colonne) et Y (ligne) sont sauvegardées,
+           ainsi qu'une 'Position' formée de leur concaténation (ex: AA1)."""
+        with open("disposition_magasin.csv", "a", newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile, delimiter=';')
+            writer.writerow([produit, self.colonne, self.ligne, f"{self.colonne}{self.ligne}"])
+        print(f"✅ Produit {produit} enregistré dans {self.colonne}{self.ligne}")
+    
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = VueAdmin()
