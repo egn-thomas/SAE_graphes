@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject
-from model import MagasinModel
+from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
 
 

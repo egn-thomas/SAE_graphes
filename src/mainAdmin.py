@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QApplication
-from controller import MagasinController
+from controllerAdmin import MagasinController
 
 
 def main():
