@@ -337,6 +337,9 @@ class DraggableLabel(QtWidgets.QLabel):
 
 
 class DropArea(QtWidgets.QLabel):
+
+    produit_place = QtCore.pyqtSignal(int, int, str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
