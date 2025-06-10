@@ -163,6 +163,7 @@ class VueAdmin(QtWidgets.QWidget):
 
         # Zone superposée
         self.zoneSuperposee = QtWidgets.QWidget(self.partieDroite)
+        self.zoneSuperposee.setContentsMargins(0, 0, 0, 0)
         self.zoneSuperposee.setFixedSize(760, 900)
         self.zoneSuperposee.setStyleSheet("background-color: transparent;")
 
