@@ -34,7 +34,7 @@ class VueAdmin(QtWidgets.QWidget):
             categories = []
             liste_produits = []
 
-        # Création de l'instance Magasin
+        # Création du Magasin
         self.magasin = Magasin(
             nom=nom_magasin,
             path_plan_magasin=plan_path,
@@ -101,6 +101,7 @@ class VueAdmin(QtWidgets.QWidget):
                         cell.articles_par_cellule[cellule].append(produit)
                         print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
                         break
+
 
             
     def create_partieGauche(self):
@@ -223,7 +224,6 @@ class VueAdmin(QtWidgets.QWidget):
 
         if plan.isNull():
             print(f"Erreur : l'image n'a pas pu être chargée depuis {self.magasin.path_plan_magasin}")
-            plan = QPixmap(760, 900)  # image vide par défaut
 
         plan = plan.transformed(transform)
         self.labelPlan.setPixmap(plan)
@@ -239,31 +239,41 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_grille()
 
     def create_grille(self):
+        # Cache des valeurs fréquemment utilisées
+        geometry = self.labelPlan.geometry()
+        displayed_width = geometry.width()
+        displayed_height = geometry.height()
+        
         # Supprimer l'ancienne grille si elle existe
         if hasattr(self, 'labelsGrille'):
             self.labelsGrille.deleteLater()
 
-        # Grille par-dessus
+        # Création de la grille
         self.labelsGrille = QtWidgets.QWidget(self.zoneSuperposee)
         self.labelsGrille.setStyleSheet("background-color: transparent;")
-
-        displayed_width = self.labelPlan.width()
-        displayed_height = self.labelPlan.height()
-        self.labelsGrille.setGeometry(self.labelPlan.geometry())
-        self.labelsGrille.resize(displayed_width, displayed_height)
-
+        self.labelsGrille.setGeometry(geometry)
+        
+        # Cache des dimensions
         rows, cols = self.magasin.nb_lignes, self.magasin.nb_colonnes
         cell_width = displayed_width / cols
         cell_height = displayed_height / rows
 
+        def get_column_name(index):
+            result = ""
+            while index >= 0:
+                index, temp = divmod(index, 26)
+                result = chr(65 + temp) + result
+                index -= 1
+            return result
+
         for i in range(rows):
             for j in range(cols):
-                cell = DropArea(self.labelsGrille, self.magasin, self)  # On passe les références nécessaires
+                cell = DropArea(self.labelsGrille, self.magasin, self)  # Passer self comme parent VueAdmin
                 # Calcul de la coordonnée textuelle:
                 cell.colonne = chr(65 + j)   # Conserve la lettre (ex: j=26 -> '[')
                 cell.ligne = i + 1           # Numérotation à partir de 1 (ex: i=17 -> '18')
                 cell.coord = f"{cell.colonne}{cell.ligne}"  # Par exemple, "[18"
-        
+                
                 # Affecter la cellule au magasin
                 self.magasin.affecter_cellule(cell.coord, cell)
 
@@ -274,8 +284,7 @@ class VueAdmin(QtWidgets.QWidget):
                 cell.setGeometry(x, y, width, height)
                 cell.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
 
-    def mettre_a_jour_affichage_produits(self):
-        """Met à jour l'affichage de la liste des produits avec leurs coordonnées"""
+    def affichage_produits(self):
         # Vider le layout existant
         while self.layoutProduits.count():
             child = self.layoutProduits.takeAt(0)
@@ -312,7 +321,7 @@ class VueAdmin(QtWidgets.QWidget):
     def sauvegarder_automatique(self):
         """Sauvegarde automatique du magasin"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        chemin = os.path.join(script_dir, "..", f"{self.magasin.nom.replace(' ', '_')}_config.json")
+        chemin = os.path.join(script_dir, "..", f"{self.magasin.nom.replace(' ', '_')}.json")
         try:
             self.magasin.sauvegarder(chemin)
         except Exception as e:
@@ -398,7 +407,7 @@ class DraggableLabel(QtWidgets.QLabel):
 
             pixmap = self.grab()
             drag.setPixmap(pixmap)
-            drag.setHotSpot(event.pos())
+            drag.setHotSpot(QtCore.QPoint(0, 0))
 
             drag.exec(QtCore.Qt.DropAction.MoveAction)
 
@@ -430,22 +439,27 @@ class DropArea(QtWidgets.QLabel):
         print(f"[DROP] Produit déposé : {produit} sur {self.coord}")
         self.setText(produit)
         self.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
-        
-        # Enregistrer le produit dans le magasin
+    
+        # Enregistrer le produit dans le magasin et mettre à jour la structure
         if self.magasin:
             self.magasin.enregistrer_produit(self.coord, produit)
+            # Mise à jour de la liste de produits pour la cellule
+            if self.coord in self.magasin.coord_produits:
+                self.magasin.coord_produits[self.coord].append(produit)
+            else:
+                self.magasin.coord_produits[self.coord] = [produit]
             if self.coord not in self.magasin.cases_rayon:
                 self.magasin.cases_rayon.add(self.coord)
-        
-        # Afficher tous les produits dans le terminal
-        print("\n--- LISTE DES PRODUITS AVEC COORDONNÉES ---")
+    
+        # Affichage pour debug
+        print("\n--- LISTE DES PRODUITS AVEC COORDONN\u00C9ES ---")
         produits_coords = self.magasin.coord_produits.copy()
         if produits_coords:
             for coord in sorted(produits_coords.keys()):
-                produit = produits_coords[coord]
-                print(f"{coord}: {produit}")
+                prod = produits_coords[coord]
+                print(f"{coord}: {prod}")
         else:
-            print("Aucun produit placé dans le magasin")
+            print("Aucun produit plac\u00E9 dans le magasin")
 
         # Sauvegarde automatique
         if self.vue_admin:
@@ -555,9 +569,7 @@ if __name__ == "__main__":
     window = VueAdmin(
         nom_magasin="Projet 1",
         nb_lignes=52,
-        nb_colonnes=35,
-        # csv_path="chemin/vers/produits.csv",  # Optionnel
-        # plan_path="chemin/vers/plan.jpg"      # Optionnel
+        nb_colonnes=35
     )
     
     window.show()
