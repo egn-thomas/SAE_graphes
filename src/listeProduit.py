@@ -11,18 +11,4 @@ class csvLoader :
         with open(self.file_path, newline='', encoding='utf-8') as csvfile:
             reader=csv.reader(csvfile, delimiter=self.delimiter)
             return [row for row in reader]
-#lecture du fichier CSV
 
-if __name__ == "__main__":
-    try: 
-        csv_loader=csvLoader('../liste_produits.csv')
-    except FileNotFoundError:
-        print("Le fichier liste_produits.csv n'a pas été trouvé. Assurez-vous qu'il est dans le bon répertoire.")
-        exit(1)
-        
-    liste_produits= csv_loader.extract_all()
-    csv_loader=csvLoader('../Magasin.csv')
-    liste_produits_magasin=csv_loader.extract_all()
-
-    print(liste_produits)
-    print(liste_produits_magasin)
