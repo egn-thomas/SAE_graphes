@@ -56,10 +56,8 @@ class VueAdmin(QtWidgets.QWidget):
         self.layoutarticlesBox.setSpacing(10)
 
 
-        # Charger les données
+        # chargelement des produits depuis le fichier CSV
         script_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # Chemin vers le fichier CSV, supposé être un dossier au-dessus du script
         csv_path = os.path.join(script_dir, "..", "liste_produits.csv")
 
         try:
@@ -172,14 +170,15 @@ class VueAdmin(QtWidgets.QWidget):
         self.labelPlan.setGeometry(0, 0, 760, 900)
 
         transform = QTransform().rotate(90)
-        path = "../plan_magasin.jpg"
-        plan = QPixmap(path)
+
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin = os.path.join(script_dir, "..", "plan_magasin.jpg")
+
+        plan = QPixmap(chemin)
+
         if plan.isNull():
-            path = "..\\plan_magasin.jpg"
-            plan = QPixmap(path)
-        if plan.isNull():
-            print("Erreur : aucun plan de magazin trouvé.")
-            plan = QPixmap(760, 900)
+            print(f"Erreur : l'image n'a pas pu être chargée depuis {chemin}")
+            plan = QPixmap(760, 900)  # image vide par défaut
 
         plan = plan.transformed(transform)
         self.labelPlan.setPixmap(plan)
