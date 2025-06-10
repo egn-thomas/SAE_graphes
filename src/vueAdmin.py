@@ -57,16 +57,16 @@ class VueAdmin(QtWidgets.QWidget):
 
 
         # Charger les données
+        script_dir = os.path.dirname(os.path.abspath(__file__))
 
-        paths = [Path("../liste_produits.csv"), Path("..") / "liste_produits.csv"]
+        # Chemin vers le fichier CSV, supposé être un dossier au-dessus du script
+        csv_path = os.path.join(script_dir, "..", "liste_produits.csv")
 
-        loader = None
-        for path in paths:
-            try:
-                loader = lp.csvLoader(str(path))
-                break
-            except FileNotFoundError as e:
-                print(f"Fichier non trouvé : {path} -> {e}")
+        try:
+            loader = lp.csvLoader(csv_path)
+        except FileNotFoundError as e:
+            print(f"Erreur : fichier non trouvé à {csv_path} -> {e}")
+            loader = None
 
 
         produits = loader.extract_all()
