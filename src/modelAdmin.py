@@ -18,6 +18,19 @@ class MagasinModel:
 
         self.case = (str, bool, [])
         self.plan = []
+        self.articles_par_cellule = {}
+    
+    def ajouter_article(self, ligne, colonne, article):
+        """Ajoute un article dans une cellule"""
+        cellule = (ligne, colonne)
+        if cellule not in self.articles_par_cellule:
+            self.articles_par_cellule[cellule] = []
+        if article not in self.articles_par_cellule[cellule]:
+            self.articles_par_cellule[cellule].append(article)
+    
+    def get_articles_cellule(self, ligne, colonne):
+        """Récupère les articles d'une cellule"""
+        return self.articles_par_cellule.get((ligne, colonne), [])
         
     def charger_produits(self, csv_path=None):
         """Charge les produits depuis le fichier CSV"""

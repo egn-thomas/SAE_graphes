@@ -12,7 +12,9 @@ class VueAdmin(QtWidgets.QWidget):
     dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
     nom_magasin_change = QtCore.pyqtSignal(str)
     produit_place = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
-    
+
+
+
     def __init__(self):
         """Initialise l'interface utilisateur"""
         super(VueAdmin, self).__init__()
@@ -26,7 +28,66 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partie_droite()
         
         self.connecter_signaux()
+
+        self.popup_actuelle = None
     
+    def afficher_popup_articles(self, ligne, colonne, articles):
+        """Affiche une popup avec les articles d'une cellule"""
+        if not articles:
+            return
+        
+        # Fermer la popup existante
+        if self.popup_actuelle:
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
+        
+        # Créer et afficher la nouvelle popup
+        popup = self.creer_popup_articles(articles)
+        popup.show()
+        self.popup_actuelle = popup
+
+    def creer_popup_articles(self, articles):
+        """Crée une popup pour afficher les articles d'une cellule"""
+        popup = QtWidgets.QWidget(self)
+        popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
+        popup.setStyleSheet("""
+            background-color: #2c2c2c;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 5px;
+        """)
+        
+        layout = QtWidgets.QVBoxLayout(popup)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(5)
+        
+        # Titre de la popup
+        titre = QtWidgets.QLabel("Articles dans cette case:", popup)
+        titre.setStyleSheet("font-weight: bold; font-size: 14px;")
+        layout.addWidget(titre)
+        
+        # Liste des articles
+        for article in articles:
+            label = QtWidgets.QLabel(article, popup)
+            label.setStyleSheet("padding: 5px;")
+            layout.addWidget(label)
+        
+        # Ajuster la taille de la popup
+        popup.adjustSize()
+        
+        # Positionner la popup au centre de l'écran
+        screen = QtWidgets.QApplication.primaryScreen().geometry()
+        popup_width = popup.width()
+        popup_height = popup.height()
+        
+        # Calculer la position centrale
+        x = (screen.width() - popup_width) // 2
+        y = (screen.height() - popup_height) // 2
+        
+        popup.move(x, y)
+        
+        return popup
+
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
         self.partie_gauche = QtWidgets.QWidget(self)
@@ -337,20 +398,16 @@ class DraggableLabel(QtWidgets.QLabel):
 
 
 class DropArea(QtWidgets.QLabel):
-
     produit_place = QtCore.pyqtSignal(int, int, str)
+    cellule_cliquee = QtCore.pyqtSignal(int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setStyleSheet("background-color: transparent;")
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        
-        # Initialiser les attributs nécessaires pour la popup
-        self.popup_actuelle = None
-        self.articles_par_cellule = {}  # Dictionnaire pour stocker les articles par cellule
-        self.ligne = 0  
-        self.colonne = 0  
+        self.ligne = 0
+        self.colonne = 0
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
@@ -358,98 +415,11 @@ class DropArea(QtWidgets.QLabel):
 
     def dropEvent(self, event):
         produit = event.mimeData().text()
-        print(f"[DROP] Produit déposé : {produit}")
         self.setText(produit)
         self.produit_place.emit(self.ligne, self.colonne, produit)
         self.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
-        
-        # Ajouter le produit à la liste des articles de cette cellule
-        cellule = (self.ligne, self.colonne)
-        if cellule not in self.articles_par_cellule:
-            self.articles_par_cellule[cellule] = []
-        if produit not in self.articles_par_cellule[cellule]:
-            self.articles_par_cellule[cellule].append(produit)
-        
         event.acceptProposedAction()
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            self.creer_ou_fermer_popup(self.ligne, self.colonne)
-
-    def creer_ou_fermer_popup(self, ligne, colonne):
-        cellule_cliquee = (ligne, colonne)
-
-        # Si une vignette est déjà ouverte sur cette cellule, on la ferme
-        if self.popup_actuelle and hasattr(self, "cellule_popup_actuelle") and self.cellule_popup_actuelle == cellule_cliquee:
-            self.popup_actuelle.hide()
-            self.popup_actuelle.deleteLater()
-            self.popup_actuelle = None
-            self.cellule_popup_actuelle = (-1, -1)
-            return
-
-        # Fermer l'ancienne vignette si une autre était ouverte
-        if self.popup_actuelle:
-            self.popup_actuelle.hide()
-            self.popup_actuelle.deleteLater()
-            self.popup_actuelle = None
-
-        # Récupérer les articles de la cellule
-        articles = self.articles_par_cellule.get(cellule_cliquee, [])
-
-        if not articles:
-            return
-
-        # Créer une nouvelle vignette
-        vignette = QtWidgets.QWidget(self.parent())
-        vignette.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint | QtCore.Qt.WindowType.Tool)
-        vignette.setAttribute(QtCore.Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        vignette.setStyleSheet("""
-            QWidget {
-                background-color: #404040;
-                border: 2px solid #666;
-                border-radius: 8px;
-                color: white;
-            }
-            QLabel {
-                color: white;
-                padding: 3px;
-                margin: 2px;
-                background-color: #333;
-                border-radius: 3px;
-            }
-        """)
-
-        layout = QtWidgets.QVBoxLayout(vignette)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(2)
-
-
-        # Ajouter chaque article
-        for article in articles:
-            label_article = QtWidgets.QLabel(article)
-            label_article.setWordWrap(True)
-            layout.addWidget(label_article)
-
-        # Calculer la position de la vignette à côté de la case
-        pos_cellule = self.pos()
-        pos_parent = self.parent().mapToGlobal(QtCore.QPoint(0, 0))
-        
-        vignette_x = pos_parent.x() + pos_cellule.x() + self.width() + 5
-        vignette_y = pos_parent.y() + pos_cellule.y()
-        
-        # Ajuster la taille de la vignette selon le contenu
-        vignette.adjustSize()
-        vignette.setMinimumWidth(150)
-        vignette.setMaximumWidth(250)
-        
-        # Vérifier que la vignette ne sorte pas de l'écran
-        screen_geometry = QtWidgets.QApplication.primaryScreen().geometry()
-        if vignette_x + vignette.width() > screen_geometry.width():
-            vignette_x = pos_parent.x() + pos_cellule.x() - vignette.width() - 5
-        
-        vignette.move(vignette_x, vignette_y)
-        vignette.show()
-
-        # Mémoriser la vignette
-        self.popup_actuelle = vignette
-        self.cellule_popup_actuelle = cellule_cliquee   
+            self.cellule_cliquee.emit(self.ligne, self.colonne)

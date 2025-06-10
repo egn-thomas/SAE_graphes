@@ -21,6 +21,18 @@ class MagasinController(QObject):
         self.vue.dimensions_changees.connect(self.changer_dimensions_grille)
         self.vue.nom_magasin_change.connect(self.changer_nom_magasin)
         self.vue.produit_place.connect(self.placer_produit)
+        for cellule in self.vue.cellules_grille.values():
+            cellule.produit_place.connect(self.produit_place)
+            cellule.cellule_cliquee.connect(self.cellule_cliquee)
+
+    def produit_place(self, ligne, colonne, produit):
+        """Gère le placement d'un produit"""
+        self.model.ajouter_article(ligne, colonne, produit)
+    
+    def cellule_cliquee(self, ligne, colonne):
+        """Gère le clic sur une cellule"""
+        articles = self.model.get_articles_cellule(ligne, colonne)
+        self.vue.afficher_popup_articles(ligne, colonne, articles)
     
     def initialiser(self):
         """Initialise l'application avec les données de base"""
