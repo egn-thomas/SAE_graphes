@@ -112,18 +112,43 @@ class VueAdmin(QtWidgets.QWidget):
         layoutTableauBord = QtWidgets.QVBoxLayout(self.tableauDeBord)
 
         self.labelTableauBord = QtWidgets.QLabel("Réglages du magasin", self.tableauDeBord)
-        
-        self.spinTableauBord = QtWidgets.QSpinBox(self.tableauDeBord)
-        self.spinTableauBord.setRange(0, 4)
-        self.spinTableauBord.setStyleSheet("max-width: 50px;")
-        
-        self.curseurTableauBord = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
-        self.curseurTableauBord.setRange(0, 4)
-        self.curseurTableauBord.setStyleSheet("margin-bottom: 40px; max-width: 200px;")
 
+        # --- Colonnes (SpinBox + Label) ---
+        layoutColonnes = QtWidgets.QHBoxLayout()
+        self.spinTableauBordColonnes = QtWidgets.QSpinBox(self.tableauDeBord)
+        self.spinTableauBordColonnes.setRange(0, 4)
+        self.spinTableauBordColonnes.setStyleSheet("max-width: 50px;")
+        labelColonnes = QtWidgets.QLabel("Nombre de colonnes visibles", self.tableauDeBord)
+
+        layoutColonnes.addWidget(self.spinTableauBordColonnes)
+        layoutColonnes.addWidget(labelColonnes)
+
+        # --- Slider Colonnes ---
+        self.curseurTableauBordColonnes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
+        self.curseurTableauBordColonnes.setRange(0, 15)
+        self.curseurTableauBordColonnes.setStyleSheet("margin-bottom: 40px; max-width: 200px;")
+
+        # --- Lignes (SpinBox + Label) ---
+        layoutLignes = QtWidgets.QHBoxLayout()
+        self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableauDeBord)
+        self.spinTableauBordLignes.setRange(0, 4)
+        self.spinTableauBordLignes.setStyleSheet("max-width: 50px;")
+        labelLignes = QtWidgets.QLabel("Nombre de lignes visibles", self.tableauDeBord)
+
+        layoutLignes.addWidget(self.spinTableauBordLignes)
+        layoutLignes.addWidget(labelLignes)
+
+        # --- Slider Lignes ---
+        self.curseurTableauBordLignes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableauDeBord)
+        self.curseurTableauBordLignes.setRange(0, 15)
+        self.curseurTableauBordLignes.setStyleSheet("margin-bottom: 40px; max-width: 200px;")
+
+        # --- Ajout au layout principal ---
         layoutTableauBord.addWidget(self.labelTableauBord)
-        layoutTableauBord.addWidget(self.spinTableauBord)
-        layoutTableauBord.addWidget(self.curseurTableauBord)
+        layoutTableauBord.addLayout(layoutColonnes)
+        layoutTableauBord.addWidget(self.curseurTableauBordColonnes)
+        layoutTableauBord.addLayout(layoutLignes)
+        layoutTableauBord.addWidget(self.curseurTableauBordLignes)
 
 
 
