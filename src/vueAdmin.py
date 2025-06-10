@@ -1,6 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QApplication, QMessageBox, QDialog, QListWidget, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QApplication
 import sys
 import os
 import listeProduit as lp
