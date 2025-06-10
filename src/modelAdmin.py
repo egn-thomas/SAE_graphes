@@ -67,6 +67,14 @@ class MagasinModel:
         except FileNotFoundError as e:
             print(f"Erreur : fichier non trouvé à {csv_path} -> {e}")
             return False
+        
+    def setNomMagasin(self, nom):
+        """definir le nom du magazin"""
+        self.nom_magasin = nom
+
+    def setNomAuteur(self, nom):
+        """definir le nom de l'auteur"""
+        self.nom_auteur = nom
 
 
 
