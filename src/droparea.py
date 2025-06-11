@@ -21,8 +21,8 @@ class DropArea(QLabel):
             border: 1px solid rgba(255, 255, 255, 0.5);
         """
         self.filled_style = """
-            background-color: rgba(100, 100, 100, 0.6);
-            color: white;
+            background-color: rgba(10, 10, 100, 0.5);
+            color: transparent;
             border: 1px solid rgba(255, 255, 255, 0.3);
         """
         self.setStyleSheet(self.default_style)
@@ -41,6 +41,13 @@ class DropArea(QLabel):
             else:
                 self.setStyleSheet(self.hover_style_couloir)
         super().enterEvent(event)
+
+    def dragEnterEvent(self, event):
+        """Appelé quand un élément est glissé au-dessus"""
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
 
     def leaveEvent(self, event):
         """Appelé quand la souris quitte la zone"""
