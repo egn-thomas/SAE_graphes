@@ -4,33 +4,45 @@ from PyQt6.QtWidgets import QWidget
 
 class Graphe:
     """Représente le graphe du magasin et gère son affichage"""
-    def __init__(self, nb_lignes: int, nb_colonnes: int, parent: QWidget = None):
-        self.graphe = {}  # Structure logique
-        self.cellules_graphiques = {}  # Interface graphique
+    def __init__(self, nb_lignes: int, nb_colonnes: int, cases_colorees, parent=None):
+        self.graphe = {}
+        self.cellules_graphiques = {}
         self.nb_lignes = nb_lignes
         self.nb_colonnes = nb_colonnes
+        self.cases_colorees = cases_colorees
         self.parent = parent
+        print("Cases colorées reçues :", self.cases_colorees)
         self.initialiser_graphe()
 
     def initialiser_graphe(self):
         """Initialise la structure logique et graphique"""
-        # Création des cellules
+        print(f"[DEBUG graphe.py] Initialisation graphe avec cases_colorees: {self.cases_colorees}")
+        print(f"[DEBUG graphe.py] Nombre de cases colorées: {len(self.cases_colorees) if self.cases_colorees else 0}")
+        
         for i in range(self.nb_lignes):
             for j in range(self.nb_colonnes):
-                # Structure logique
-                cellule = Cellule()
+                if (i, j) in self.cases_colorees:
+                    est_rayon = True
+                else:
+                    est_rayon = False
+                print(f"[DEBUG graphe.py] Case ({i},{j}) - est_rayon = {est_rayon}")
+                cellule = Cellule(None, est_rayon)
                 cellule.set_position(i, j)
                 self.graphe[(i, j)] = cellule
-                
-                # Interface graphique
-                if self.parent:
-                    self._creer_cellule_graphique(i, j)
-        
+
+        for i in range(self.nb_lignes):
+            for j in range(self.nb_colonnes):
+                self._creer_cellule_graphique(i, j)
+
         self.connecter_cellules()
 
     def _creer_cellule_graphique(self, i, j):
         """Crée une cellule graphique"""
-        drop_area = DropArea(self.parent)
+        if (i, j) in self.cases_colorees:
+            est_rayon = True
+        else:
+            est_rayon = False
+        drop_area = DropArea(self.parent, est_rayon)
         drop_area.ligne = i
         drop_area.colonne = j
         cellule_logique = self.graphe[(i, j)]
