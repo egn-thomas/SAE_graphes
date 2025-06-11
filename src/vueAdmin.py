@@ -90,7 +90,7 @@ class VueAdmin(QtWidgets.QWidget):
 
                     # Parcourir toutes les DropArea pour mettre à jour la bonne cellule
                     for drop_area in self.labels_grille.findChildren(DropArea):
-                        # On suppose que drop_area.colonne et drop_area.ligne sont stockés en indices 0‑base
+                        
                         if drop_area.colonne == col_index and drop_area.ligne == row_index:
                             if produit.strip():
                                 drop_area.setText(produit)
@@ -105,7 +105,7 @@ class VueAdmin(QtWidgets.QWidget):
                     self.nom_magasin.setText(project_name)
             print("Chargement automatique terminé avec succès.")
         except FileNotFoundError:
-            print("⚠ Le fichier 'disposition_magasin.csv' est introuvable.")
+            print("Le fichier 'disposition_magasin.csv' est introuvable.")
         except Exception as e:
             print(f"[ERREUR] lors du chargement automatique : {e}")
 
@@ -386,17 +386,16 @@ class VueAdmin(QtWidgets.QWidget):
             drop_area.placer_produit.connect(self.on_placer_produit)
             drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
             self.cellules_grille[(i, j)] = drop_area
-    
+            
     def effacer_projet(self):
         """
         Réinitialise le fichier 'disposition_magasin.csv', vide le contenu
-        de toutes les cellules de la grille et supprime la popup active,
-        sans fermer l'application. Ceci permet de nettoyer l'affichage
-        tout en laissant l'interface active pour de nouvelles actions.
+        de toutes les cellules de la grille, efface le nom du projet dans le widget
+        et supprime la popup active,
         """
         import csv, os
         try:
-            # Réinitialiser le CSV (en gardant bien l'entête)
+            # Réinitialisation du CSV (en gardant l'en-tête)
             with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
@@ -404,20 +403,22 @@ class VueAdmin(QtWidgets.QWidget):
         except Exception as e:
             print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
 
-        # Effacer le contenu de toutes les cellules de la grille (niveau affichage)
+        # Effacer le contenu visuel de toutes les cellules de la grille (DropArea)
         for cell in self.labels_grille.findChildren(DropArea):
             cell.setText("")
             cell.setStyleSheet(cell.default_style)
-            # Réinitialiser complètement le contenu interne
-            cell.articles = []
+            cell.articles = []  # Réinitialiser le contenu interne
 
-        # Supprimer la popup active, sans fermer la fenêtre principale
+        # Effacer le nom du projet affiché dans le widget
+        self.nom_magasin.setText("")
+
+        # Supprimer la popup active, si elle existe
         if hasattr(self, "popup_actuelle") and self.popup_actuelle:
             self.popup_actuelle.hide()
             self.popup_actuelle.deleteLater()
             self.popup_actuelle = None
 
-        print("Contenu du projet et pop-up effacés. L'application reste ouverte.")
+        print("Contenu du projet, nom affiché et pop-up effacés. L'application reste ouverte.")
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
