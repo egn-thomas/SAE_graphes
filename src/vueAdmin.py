@@ -3,6 +3,7 @@ from PyQt6.QtGui import QPixmap, QTransform
 from graphe import Graphe
 from droparea import DropArea
 import os
+import csv
 
 
 class VueAdmin(QtWidgets.QWidget):
@@ -30,26 +31,133 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partie_droite()
         
         self.connecter_signaux()
-
+        
+         # Initialiser le fichier de sauvegarde s'il n'existe pas.
+        self.initialiser_sauvegarde()
+        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
+        self.charger_csv_automatiquement()
+        
         self.popup_actuelle = None
+        
+    def initialiser_sauvegarde(self):
+        """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
+    if not os.path.exists("disposition_magasin.csv"):
+        print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
+        with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile, delimiter=';')
+            writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+
+    def charger_csv_automatiquement(self):
+        """
+        Lit le fichier CSV "disposition_magasin.csv" et met à jour automatiquement
+        les cellules de la grille (DropArea) en fonction des coordonnées.
+        
+        Le fichier CSV doit comporter 5 colonnes, dans cet ordre :
+        - Nom du projet
+        - Nom du produit
+        - Colonne (numérique, en 1-base)
+        - Ligne (numérique, en 1-base)
+        - Position (optionnel : par exemple "A1")
+        
+        Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0‑base,
+        recherche la DropArea correspondante, et met à jour son texte, son style (background)
+        et son contenu.
+        """
+
+        try:
+            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+                reader = csv.reader(csvfile, delimiter=";")
+                header = next(reader, None)  # Ignorer l'en-tête
+                project_name = None
+                
+                for row in reader:
+                    if len(row) < 5:
+                        continue  # Ignorer les lignes incomplètes
+                    nom_projet, produit, col_str, ligne_str, position = row
+
+                    # Conserver le nom du projet depuis la première ligne valide
+                    if project_name is None:
+                        project_name = nom_projet
+
+                    try:
+                        # Convertir les coordonnées en indices 0‑base
+                        col_index = int(col_str) - 1
+                        row_index = int(ligne_str) - 1
+                    except ValueError:
+                        # Si la conversion échoue, on passe à la prochaine ligne
+                        continue
+
+                    # Parcourir toutes les DropArea pour mettre à jour la bonne cellule
+                    for drop_area in self.labels_grille.findChildren(DropArea):
+                        
+                        if drop_area.colonne == col_index and drop_area.ligne == row_index:
+                            if produit.strip():
+                                drop_area.setText(produit)
+                                drop_area.setStyleSheet(drop_area.filled_style)
+                                drop_area.articles = [produit]  # Remplacer complètement l'ancien contenu
+                            else:
+                                drop_area.setText("")
+                                drop_area.setStyleSheet(drop_area.default_style)
+                                drop_area.articles = []
+                            break  # Une fois la cellule trouvée et mise à jour, on passe à la ligne suivante
+                if project_name:
+                    self.nom_magasin.setText(project_name)
+            print("Chargement automatique terminé avec succès.")
+        except FileNotFoundError:
+            print("Le fichier 'disposition_magasin.csv' est introuvable.")
+        except Exception as e:
+            print(f"[ERREUR] lors du chargement automatique : {e}")
+
+    def maj_nom_projet_csv(self, nouveau_nom):
+        """
+        Met à jour le CSV 'disposition_magasin.csv' en modifiant la première colonne (Nom du projet)
+        pour toutes les lignes, et ce en temps réel à chaque modification.
+        """
+        try:
+            # Si le fichier existe, on le lit
+            if os.path.exists("disposition_magasin.csv"):
+                with open("disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
+                    reader = csv.reader(csvfile, delimiter=';')
+                    lignes = list(reader)
+
+
+            # Vérifier que le fichier contient au moins une ligne (l'en-tête)
+            if len(lignes) > 0:
+                # Conserver l'en-tête intacte et mettre à jour la première colonne des données
+                en_tete = lignes[0]
+                nouvelles_lignes = [en_tete]
+                for ligne in lignes[1:]:
+                    # Mise à jour de la première colonne
+                    if len(ligne) >= 1:
+                        ligne[0] = nouveau_nom
+                    nouvelles_lignes.append(ligne)
+
+        # Réécriture du fichier CSV avec les nouvelles valeurs
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerows(nouvelles_lignes)
+
+        except Exception as e:
+            print(f"[ERREUR] Lors de la mise à jour du CSV: {e}")
+    
     
     def afficher_popup_articles(self, ligne, colonne, articles):
-        """Affiche une popup avec les articles d'une cellule"""
+        """Affiche une popup listant les articles d'une cellule cliquée."""
         if not articles:
             return
-        
-        # Fermer la popup existante
+
+        # Ferme la popup actuelle, s'il y en a une.
         if self.popup_actuelle:
             self.popup_actuelle.hide()
             self.popup_actuelle.deleteLater()
-        
-        # Créer et afficher la nouvelle popup
+
+        # Crée la nouvelle popup
         popup = self.creer_popup_articles(articles)
         popup.show()
         self.popup_actuelle = popup
 
     def creer_popup_articles(self, articles):
-        """Crée une popup pour afficher les articles d'une cellule"""
+        """Crée une popup affichant la liste des articles."""
         popup = QtWidgets.QWidget(self)
         popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
         popup.setStyleSheet("""
@@ -58,36 +166,25 @@ class VueAdmin(QtWidgets.QWidget):
             border: 1px solid #444;
             border-radius: 5px;
         """)
-        
+
         layout = QtWidgets.QVBoxLayout(popup)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
-        
-        # Titre de la popup
+
         titre = QtWidgets.QLabel("Articles dans cette case:", popup)
         titre.setStyleSheet("font-weight: bold; font-size: 14px;")
         layout.addWidget(titre)
-        
-        # Liste des articles
+
         for article in articles:
             label = QtWidgets.QLabel(article, popup)
             label.setStyleSheet("padding: 5px;")
             layout.addWidget(label)
-        
-        # Ajuster la taille de la popup
+
         popup.adjustSize()
-        
-        # Positionner la popup au centre de l'écran
+        # Positionne la popup au centre de l'écran
         screen = QtWidgets.QApplication.primaryScreen().geometry()
-        popup_width = popup.width()
-        popup_height = popup.height()
-        
-        # Calculer la position centrale
-        x = (screen.width() - popup_width) // 2
-        y = (screen.height() - popup_height) // 2
-        
-        popup.move(x, y)
-        
+        popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
+
         return popup
 
     def create_partie_gauche(self):
@@ -299,6 +396,39 @@ class VueAdmin(QtWidgets.QWidget):
             drop_area.placer_produit.connect(self.on_placer_produit)
             drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
             self.cellules_grille[(i, j)] = drop_area
+            
+    def effacer_projet(self):
+        """
+        Réinitialise le fichier 'disposition_magasin.csv', vide le contenu
+        de toutes les cellules de la grille, efface le nom du projet dans le widget
+        et supprime la popup active,
+        """
+        import csv, os
+        try:
+            # Réinitialisation du CSV (en gardant l'en-tête)
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+            print("Fichier CSV réinitialisé avec succès.")
+        except Exception as e:
+            print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
+
+        # Effacer le contenu visuel de toutes les cellules de la grille (DropArea)
+        for cell in self.labels_grille.findChildren(DropArea):
+            cell.setText("")
+            cell.setStyleSheet(cell.default_style)
+            cell.articles = []  # Réinitialiser le contenu interne
+
+        # Effacer le nom du projet affiché dans le widget
+        self.nom_magasin.setText("")
+
+        # Supprimer la popup active, si elle existe
+        if hasattr(self, "popup_actuelle") and self.popup_actuelle:
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
+            self.popup_actuelle = None
+
+        print("Contenu du projet, nom affiché et pop-up effacés. L'application reste ouverte.")
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
@@ -308,11 +438,14 @@ class VueAdmin(QtWidgets.QWidget):
         self.spinTableauBordLignes.valueChanged.connect(self.curseurTableauBordLignes.setValue)
         self.curseurTableauBordLignes.valueChanged.connect(self.spinTableauBordLignes.setValue)
         
+        
         # Émission des signaux vers le contrôleur
         self.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
         self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
-    
+        self.bouton_effacer.clicked.connect(self.effacer_projet)
+        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
+
     def on_dimensions_changees(self):
         """Émet le signal de changement de dimensions"""
         self.dimensions_changees.emit(self.spinTableauBordColonnes.value(), self.spinTableauBordLignes.value())
@@ -322,9 +455,18 @@ class VueAdmin(QtWidgets.QWidget):
         self.placer_produit.emit(ligne, colonne, produit)
 
     def on_cellule_cliquee(self, ligne, colonne):
-        """Gère le clic sur une cellule"""
-        self.cellule_cliquee.emit(ligne, colonne)
-    
+        """
+        Gère le clic sur une cellule : recherche la DropArea correspondante dans la grille.
+        Si la cellule possède des articles, affiche une popup avec le contenu.
+        """
+        # Parcourir toutes les DropArea dans la grille
+        for drop_area in self.labels_grille.findChildren(DropArea):
+            if drop_area.ligne == ligne and drop_area.colonne == colonne:
+                # S'il y a un contenu dans la cellule, afficher la popup
+                if drop_area.articles and len(drop_area.articles) > 0:
+                    self.afficher_popup_articles(ligne, colonne, drop_area.articles)
+                break
+        
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
         self.clear_layout(self.layout_articles_box)

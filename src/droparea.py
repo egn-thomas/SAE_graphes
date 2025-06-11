@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtCore import pyqtSignal, Qt
+import csv
 
 class DropArea(QLabel):
     placer_produit = pyqtSignal(int, int, str)
@@ -56,14 +57,59 @@ class DropArea(QLabel):
         super().leaveEvent(event)
 
     def dropEvent(self, event):
-        """Active quand un élément est déposé"""
         produit = event.mimeData().text()
         self.setText(produit)
         self.setStyleSheet(self.filled_style)
         self.placer_produit.emit(self.ligne, self.colonne, produit)
+        # Remplacer l'ancien contenu par le nouveau
+        self.articles = [produit]
         event.acceptProposedAction()
-
+        self.enregistrer_produit(produit)
+        
     def mousePressEvent(self, event):
-        """Gère le clic sur la cellule"""
+        """Gère le clic sur la cellule uniquement si elle affiche un produit"""
         if event.button() == Qt.MouseButton.LeftButton:
-            self.cellule_cliquee.emit(self.ligne, self.colonne)
+            # Si le texte est vide, aucun produit n'est enregistré
+            if self.text().strip() != "":
+                self.cellule_cliquee.emit(self.ligne, self.colonne)
+            
+    def enregistrer_produit(self, produit):
+        """
+        Enregistre le produit déposé dans le CSV avec les coordonnées formatées.
+        Si le fichier CSV n'existe pas ou est vide, il est initialisé avec un en‑tête incluant la colonne 'Nom du projet'.
+        """
+        try:
+            # Récupérer le nom du projet depuis la vue administrateur, si disponible
+            if hasattr(self, "vue_admin") and self.vue_admin is not None:
+                nom_projet = self.vue_admin.nom_magasin.text()
+                if not nom_projet:
+                    nom_projet = ""
+            else:
+                nom_projet = ""
+        
+           
+            x = self.colonne
+            y = str(self.ligne)
+            coord_formatee = f"{x}{y}"
+
+            import os
+            file_path = "disposition_magasin.csv"
+            header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+
+            # Vérifier si le fichier existe et déterminer s'il est vide
+            file_exists = os.path.exists(file_path)
+            file_empty = not file_exists or os.stat(file_path).st_size == 0
+
+            with open(file_path, "a", newline="", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                # S'il est vide, écrire l'en-tête
+                if file_empty:
+                    writer.writerow(header)
+                # Écriture de la ligne contenant le nom du projet et le produit
+                writer.writerow([nom_projet, produit, x, y, coord_formatee])
+
+            print(f"Produit {produit} enregistré dans le projet {nom_projet} à la cellule {coord_formatee}")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
+            
+        
