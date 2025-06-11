@@ -86,7 +86,7 @@ class DropArea(QLabel):
     def enregistrer_produit(self, produit):
         """
         Enregistre le produit déposé dans le CSV avec les coordonnées formatées.
-        Si le fichier CSV n'existe pas ou est vide, il est initialisé avec un en‑tête incluant la colonne 'Nom du projet'.
+        Si le fichier CSV n'existe pas ou est vide, il est initialisé avec un en-tête incluant la colonne 'Nom du projet'.
         """
         try:
             # Récupérer le nom du projet depuis la vue administrateur, si disponible
@@ -118,7 +118,7 @@ class DropArea(QLabel):
                 # Écriture de la ligne contenant le nom du projet et le produit
                 writer.writerow([nom_projet, produit, x, y, coord_formatee])
 
-            print(f"Produit {produit} enregistré dans le projet {nom_projet} à la cellule {coord_formatee}")
+            print(f"Produit {produit} enregistré dans le projet {nom_projet} en ({x}, {y}).")
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
             
