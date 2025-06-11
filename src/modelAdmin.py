@@ -8,14 +8,13 @@ import listeProduit as lp
 class MagasinModel:
     """Gère les données du magasin"""
     def __init__(self):
-        # Informations de base
         self.nom_magasin = ""
         self.nom_auteur = ""
-        self.nb_colonnes = 56
-        self.nb_lignes = 35
+        self.seuil_blanc = 180
+        self.nb_colonnes = 35
+        self.nb_lignes = 56
         self.cases_rayon = self.analyser_image()
 
-        # Structure de données
         self.graphe = None
         self.categories = []
         self.produits_par_categorie = {}
@@ -66,77 +65,71 @@ class MagasinModel:
                 if valeur:
                     self.produits_par_categorie[cat].append(valeur)
 
-    def calculer_pourcentage_blanc(self, case):
-        """
-        Calcule le pourcentage de pixels blancs dans une case
-        """
-        seuil_pixel_blanc = 100
-        
-        pixels_blancs = np.sum(np.all(case >= seuil_pixel_blanc, axis=2))
-        pixels_totaux = case.shape[0] * case.shape[1]
-        
-        if pixels_totaux == 0:
-            return 0
-        
-        pourcentage = (pixels_blancs / pixels_totaux) * 100
 
-        return pourcentage
-
-    
     def analyser_image(self):
-        
-        chemin_image = "plan_magasin.png"  
+        """Analyse l'image du plan pour détecter les rayons"""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin_image = os.path.join(script_dir, "..", "plan_magasin.jpg")
         
         try:
             image = cv2.imread(chemin_image)
             if image is None:
-                print("Erreur : Impossible de charger l'image. Vérifiez le chemin.")
-                return
+                print("Erreur : Impossible de charger l'image.")
+                return []
 
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image_rgb = cv2.rotate(image_rgb, cv2.ROTATE_90_CLOCKWISE)
             hauteur, largeur = image_rgb.shape[:2]
             
-            print(f"Image chargée : {largeur}x{hauteur} pixels")
+            # Créer l'image de visualisation
+            viz_image = np.zeros((hauteur, largeur, 3), dtype=np.uint8)
+            # Première passe : on met tout en blanc
+            viz_image.fill(255)
             
-            nb_colonnes = 56
-            nb_lignes = 35
-            seuil_blanc = 80
-            
-            largeur_case = largeur // nb_colonnes
-            hauteur_case = hauteur // nb_lignes
-            
-            print(f"Taille de chaque case : {largeur_case}x{hauteur_case} pixels")
-            
-            cases_colorees = []
-
-            for ligne in range(nb_lignes):
-                for colonne in range(nb_colonnes):
-                    x_debut = colonne * largeur_case
-                    y_debut = ligne * hauteur_case
-                    x_fin = min(x_debut + largeur_case, largeur)
-                    y_fin = min(y_debut + hauteur_case, hauteur)
+            # Deuxième passe : on colorie uniquement les cases non blanches
+            for ligne in range(self.nb_lignes):
+                for colonne in range(self.nb_colonnes):
+                    x_debut = colonne * (largeur // self.nb_colonnes)
+                    y_debut = ligne * (hauteur // self.nb_lignes)
+                    x_fin = min(x_debut + (largeur // self.nb_colonnes), largeur)
+                    y_fin = min(y_debut + (hauteur // self.nb_lignes), hauteur)
                     
-                    case = image_rgb[y_debut:y_fin, x_debut:x_fin]
+                    zone = image_rgb[y_debut:y_fin, x_debut:x_fin]
+                    moyenne_pixels = np.mean(zone, axis=(0, 1))
+                    
+                    # Si la moyenne des pixels est sous le seuil, on garde la couleur
+                    if np.any(moyenne_pixels < self.seuil_blanc):
+                        viz_image[y_debut:y_fin, x_debut:x_fin] = moyenne_pixels.astype(np.uint8)
 
-                    pourcentage_blanc = self.calculer_pourcentage_blanc(case)
-
-                    if pourcentage_blanc < seuil_blanc:
+            # Troisième passe : on liste toutes les cases qui ne sont pas blanches pures (#FFFFFF)
+            cases_colorees = []
+            for ligne in range(self.nb_lignes):
+                for colonne in range(self.nb_colonnes):
+                    x_debut = colonne * (largeur // self.nb_colonnes)
+                    y_debut = ligne * (hauteur // self.nb_lignes)
+                    x_fin = min(x_debut + (largeur // self.nb_colonnes), largeur)
+                    y_fin = min(y_debut + (hauteur // self.nb_lignes), hauteur)
+                    
+                    zone = viz_image[y_debut:y_fin, x_debut:x_fin]
+                    # On vérifie si la zone n'est pas entièrement blanche pure (#FFFFFF)
+                    if not np.all(zone == [255, 255, 255]):
                         cases_colorees.append((colonne, ligne))
-                        print(f"Case colorée trouvée : ({colonne},{ligne}) - {pourcentage_blanc:.1f}% de blanc")
-                    else:
-                        print(f"Case blanche skippée : ({colonne},{ligne}) - {pourcentage_blanc:.1f}% de blanc")
+                        print(f"Case non blanche en ({colonne}, {ligne})")
 
-            print(f"\n=== RÉSULTATS ===")
-            print(f"Nombre total de cases : {nb_colonnes * nb_lignes}")
-            print(f"Nombre de cases colorées : {len(cases_colorees)}")
-            print(f"Nombre de cases blanches (skippées) : {nb_colonnes * nb_lignes - len(cases_colorees)}")
-            
-            print(f"\nCoordonnées des cases colorées :")
-            for coord in cases_colorees:
-                print(f"  {coord}")
-            
+            chemin_viz = os.path.join(script_dir, "..", "visualization.jpg")
+            cv2.imwrite(chemin_viz, cv2.cvtColor(viz_image, cv2.COLOR_RGB2BGR))
+            print(f"Nombre de cases non blanches : {len(cases_colorees)}")
+
             return cases_colorees
-            
+
         except Exception as e:
-            print(f"Erreur : {e}")
-            return None
+            print(f"Erreur lors de l'analyse de l'image: {e}")
+            return []
+
+
+
+    
+
+
+
+
