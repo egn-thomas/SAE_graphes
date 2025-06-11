@@ -12,7 +12,8 @@ class MagasinController(QObject):
         super().__init__()
         self.model = MagasinModel()
         self.vue = VueAdmin()
-        self.categorie_courante = None  # Add this line
+        self.model.parent = self.vue
+        self.categorie_courante = None
         self.connecter_signaux()
         self.initialiser()
     

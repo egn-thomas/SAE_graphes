@@ -20,11 +20,15 @@ class MagasinModel:
         self.produits_par_categorie = {}
         self.liste_produits = []
 
+        self.parent = None
         self.initialiser_graphe()
 
     def initialiser_graphe(self):
         """Initialise le graphe du magasin"""
-        self.graphe = Graphe(self.nb_lignes, self.nb_colonnes)
+        cases_colorees = self.analyser_image()
+        print(f"Création du graphe avec {len(cases_colorees)} cases colorées")
+        self.graphe = Graphe(self.nb_lignes, self.nb_colonnes, self.parent, cases_colorees)
+        return self.graphe
 
     def ajouter_article(self, ligne, colonne, article):
         """Ajoute un article dans une cellule"""
@@ -63,82 +67,58 @@ class MagasinModel:
                 if valeur:
                     self.produits_par_categorie[cat].append(valeur)
 
-
-def analyser_image():
-    
-    chemin_image = "plan_magasin.png"  
-    
-    try:
-        image = cv2.imread(chemin_image)
-        if image is None:
-            print("Erreur : Impossible de charger l'image. Vérifiez le chemin.")
-            return
-
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        hauteur, largeur = image_rgb.shape[:2]
+    def calculer_pourcentage_blanc(self, case):
+        """
+        Calcule le pourcentage de pixels blancs dans une case
+        """
+        seuil_pixel_blanc = 240
         
-        print(f"Image chargée : {largeur}x{hauteur} pixels")
+        pixels_blancs = np.sum(np.all(case >= seuil_pixel_blanc, axis=2))
+        pixels_totaux = case.shape[0] * case.shape[1]
         
-        nb_colonnes = int(input("Nombre de colonnes : "))
-        nb_lignes = int(input("Nombre de lignes : "))
-        seuil_blanc = float(input("Pourcentage de blanc pour considérer une case comme blanche (0-100) : "))
+        if pixels_totaux == 0:
+            return 0
         
-        largeur_case = largeur // nb_colonnes
-        hauteur_case = hauteur // nb_lignes
-        
-        print(f"Taille de chaque case : {largeur_case}x{hauteur_case} pixels")
-        
-        cases_colorees = []
+        pourcentage = (pixels_blancs / pixels_totaux) * 100
+        return pourcentage
 
-        for ligne in range(nb_lignes):
-            for colonne in range(nb_colonnes):
-                x_debut = colonne * largeur_case
-                y_debut = ligne * hauteur_case
-                x_fin = min(x_debut + largeur_case, largeur)
-                y_fin = min(y_debut + hauteur_case, hauteur)
-                
-                case = image_rgb[y_debut:y_fin, x_debut:x_fin]
-
-                pourcentage_blanc = calculer_pourcentage_blanc(case)
-
-                if pourcentage_blanc < seuil_blanc:
-                    cases_colorees.append((colonne, ligne))
-                    print(f"Case colorée trouvée : ({colonne},{ligne}) - {pourcentage_blanc:.1f}% de blanc")
-                else:
-                    print(f"Case blanche skippée : ({colonne},{ligne}) - {pourcentage_blanc:.1f}% de blanc")
-
-        print(f"\n=== RÉSULTATS ===")
-        print(f"Nombre total de cases : {nb_colonnes * nb_lignes}")
-        print(f"Nombre de cases colorées : {len(cases_colorees)}")
-        print(f"Nombre de cases blanches (skippées) : {nb_colonnes * nb_lignes - len(cases_colorees)}")
+    def analyser_image(self):
+        """Analyse l'image du plan pour détecter les rayons"""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin_image = os.path.join(script_dir, "..", "plan_magasin.jpg")
         
-        print(f"\nCoordonnées des cases colorées :")
-        for coord in cases_colorees:
-            print(f"  {coord}")
-        
-        return cases_colorees
-        
-    except Exception as e:
-        print(f"Erreur : {e}")
-        return None
+        try:
+            image = cv2.imread(chemin_image)
+            if image is None:
+                print("Erreur : Impossible de charger l'image.")
+                return []
 
-def calculer_pourcentage_blanc(case):
-    """
-    Calcule le pourcentage de pixels blancs dans une case
-    Un pixel est considéré comme blanc si ses valeurs RGB sont toutes > 240
-    """
-    seuil_pixel_blanc = 240
-    
-    pixels_blancs = np.sum(np.all(case >= seuil_pixel_blanc, axis=2))
-    pixels_totaux = case.shape[0] * case.shape[1]
-    
-    if pixels_totaux == 0:
-        return 0
-    
-    pourcentage = (pixels_blancs / pixels_totaux) * 100
-    return pourcentage
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            hauteur, largeur = image_rgb.shape[:2]
+            
+            cases_colorees = []
+            for ligne in range(self.nb_lignes):
+                for colonne in range(self.nb_colonnes):
+                    x_debut = colonne * (largeur // self.nb_colonnes)
+                    y_debut = ligne * (hauteur // self.nb_lignes)
+                    x_fin = min(x_debut + (largeur // self.nb_colonnes), largeur)
+                    y_fin = min(y_debut + (hauteur // self.nb_lignes), hauteur)
+                    
+                    case = image_rgb[y_debut:y_fin, x_debut:x_fin]
+                    pourcentage_blanc = self.calculer_pourcentage_blanc(case)
 
-resultat = analyser_image()
+                    if pourcentage_blanc < 75:
+                        cases_colorees.append((ligne, colonne))
+
+            print(f"\nCases colorées détectées: {len(cases_colorees)}")
+            print(f"\nCases colorées: {(cases_colorees)}")
+            return cases_colorees
+
+
+        except Exception as e:
+            print(f"Erreur lors de l'analyse de l'image: {e}")
+            return []
+
 
 
     

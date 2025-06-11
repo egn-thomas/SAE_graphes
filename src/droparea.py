@@ -8,6 +8,11 @@ class DropArea(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
+        
+        # CORRECTION : Initialiser est_rayon par défaut
+        self.est_rayon = False
+        print(f"[DEBUG droparea.py] DropArea créée avec est_rayon = {self.est_rayon}")
+        
         self.default_style = """
             background-color: transparent;
             border: 1px solid rgba(0, 0, 0, 0.3);
@@ -30,16 +35,21 @@ class DropArea(QLabel):
         self.colonne = 0
 
     def lier_cellule(self, cellule):
-        """Lie la DropArea à une cellule logique"""
         self.est_rayon = cellule.est_rayon
+        print(f"[DEBUG droparea.py] Liaison DropArea ({self.ligne},{self.colonne}) → est_rayon = {self.est_rayon}")
 
     def enterEvent(self, event):
         """Appelé quand la souris entre dans la zone"""
+        print(f"[DEBUG droparea.py] enterEvent sur ({self.ligne},{self.colonne}) - est_rayon = {self.est_rayon}, text = '{self.text()}'")
         if not self.text():
-            if self.est_rayon:
+            if self.est_rayon == True:
+                print(f"[DEBUG droparea.py] Application style RAYON (vert)")
                 self.setStyleSheet(self.hover_style_rayon)
-            else:
+            elif self.est_rayon == False:
+                print(f"[DEBUG droparea.py] Application style COULOIR (rouge)")
                 self.setStyleSheet(self.hover_style_couloir)
+            else:
+                print(f"[DEBUG droparea.py] est_rayon vaut none")
         super().enterEvent(event)
 
     def dragEnterEvent(self, event):

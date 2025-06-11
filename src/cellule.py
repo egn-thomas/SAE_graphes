@@ -4,9 +4,9 @@ import os
 
 class Cellule:
     """Représente une cellule logique (sommet du graphe)"""
-    def __init__(self, contenu=None, est_rayon=False):
+    def __init__(self, contenu, est_rayon):
         self.contenu = contenu if contenu else []
-        self.est_rayon = est_rayon
+        self.est_rayon = bool(est_rayon)
         self.voisins = []
         self.position = None
 
