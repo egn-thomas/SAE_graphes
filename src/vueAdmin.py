@@ -3,7 +3,7 @@ from PyQt6.QtGui import QPixmap, QTransform
 from graphe import Graphe
 from droparea import DropArea
 import os
-
+import csv
 
 class VueAdmin(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
@@ -31,8 +31,55 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partie_droite()
         
         self.connecter_signaux()
-
+        
+         # Initialiser le fichier de sauvegarde s'il n'existe pas.
+        self.initialiser_sauvegarde()
+        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
+        self.charger_sauvegarde()
+        
         self.popup_actuelle = None
+        
+    def initialiser_sauvegarde(self):
+        """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
+    if not os.path.exists("disposition_magasin.csv"):
+        print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
+        with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile, delimiter=';')
+            writer.writerow(["Nom du produit", "X", "Y", "Position"])
+
+    def charger_sauvegarde(self):
+        """Charge la sauvegarde du magasin et place les produits dans leur case."""
+        try:
+            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+                print("ouverture d'un fichier de sauvegarde")
+                reader = csv.reader(csvfile, delimiter=';')
+                header = next(reader, None)  # Ignorer l'en-tête
+                for row in reader:
+                    if len(row) < 4:
+                        continue
+                    produit, colonne, ligne, position = row
+                    self.placer_produit_dans_grille(produit, colonne, ligne, position)
+        except FileNotFoundError:
+            print("⚠ Aucun fichier de sauvegarde trouvé.")
+
+    def placer_produit_dans_grille(self, produit, colonne, ligne, position):
+        """Parcourt les cellules du quadrillage pour placer le produit sauvegardé."""
+        # On recherche tous les widgets DropArea dans la zone de superposition (grille)
+        for cell in self.labels_grille.findChildren(DropArea):
+            # Si la cellule possède des attributs correspondant à la position sauvegardée
+            if cell.colonne == colonne and str(cell.ligne) == str(ligne):
+                cell.setText(produit)
+                cell.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
+                # Mettre à jour le dictionnaire des articles de la cellule
+                cellule = (cell.ligne, cell.colonne)
+                if cellule not in cell.ajouter_contenu:
+                    cell.ajouter_contenu[cellule] = []
+                    if produit not in cell.ajouter_contenu[cellule]:
+                        cell.articles_par_cellule[cellule].append(produit)
+                        print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
+                        break
+    
+    
     
     def afficher_popup_articles(self, ligne, colonne, articles):
         """Affiche une popup avec les articles d'une cellule"""
@@ -290,6 +337,34 @@ class VueAdmin(QtWidgets.QWidget):
             drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
             self.cellules_grille[(i, j)] = drop_area
     
+    def effacer_projet(self):
+        """
+        Réinitialise le fichier 'disposition_magasin.csv' (en conservant uniquement l'en-tête)
+        et vide le contenu des cellules de la grille du magasin.
+        Cette fonction ne ferme pas l'application, même en cas d'erreur.
+        """
+        # Effacer le contenu du fichier CSV en réécrivant un en-tête vide
+        try:
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                # Remplacez l'en-tête selon le format attendu de votre CSV
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+            print("Fichier CSV effacé avec succès.")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de l'effacement du CSV: {e}")
+
+        # Effacer le contenu de toutes les cellules de la grille
+        try:
+            for cell in self.labels_grille.findChildren(DropArea):
+                cell.setText("")
+                cell.setStyleSheet(cell.default_style)
+                # Suppression éventuelle de la liste d'articles dans la cellule.
+                if hasattr(cell, "articles"):
+                    cell.articles = []
+            print("Le contenu des cellules a été effacé.")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de l'effacement du contenu des cellules: {e}")
+    
     def connecter_signaux(self):
         """Connecte les signaux internes"""
         # Synchronisation spin/slider
@@ -298,10 +373,12 @@ class VueAdmin(QtWidgets.QWidget):
         self.spinTableauBordLignes.valueChanged.connect(self.curseurTableauBordLignes.setValue)
         self.curseurTableauBordLignes.valueChanged.connect(self.spinTableauBordLignes.setValue)
         
+        
         # Émission des signaux vers le contrôleur
         self.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
         self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
+        self.bouton_effacer.clicked.connect(self.effacer_projet)
     
     def on_dimensions_changees(self):
         """Émet le signal de changement de dimensions"""
