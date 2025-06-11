@@ -10,7 +10,6 @@ class MagasinController(QObject):
     
     def __init__(self):
         super().__init__()
-
         self.model = MagasinModel()
         self.vue = VueAdmin()
         self.connecter_signaux()
@@ -18,14 +17,18 @@ class MagasinController(QObject):
     
     def connecter_signaux(self):
         """Connecte les signaux de la vue aux méthodes du contrôleur"""
+        # Signaux principaux de la vue
         self.vue.categorie_cliquee.connect(self.afficher_produits_categorie)
         self.vue.retour_categories.connect(self.afficher_categories)
-        self.vue.dimensions_changees.connect(self.changer_dimensions_grille)
-        self.vue.nom_magasin_change.connect(self.changer_nom_magasin)
         self.vue.placer_produit.connect(self.placer_produit)
-        for cellule in self.vue.cellules_grille.values():
-            cellule.placer_produit.connect(self.placer_produit)
-            cellule.cellule_cliquee.connect(self.cellule_cliquee)
+        self.vue.cellule_cliquee.connect(self.cellule_cliquee)
+
+    def initialiser(self):
+        """Initialise l'application avec les données de base"""
+        if self.model.charger_produits():
+            self.afficher_categories()
+        else:
+            print("Erreur lors du chargement des produits")
 
     def cellule_cliquee(self, ligne, colonne):
         """Gère le clic sur une cellule"""
@@ -34,15 +37,11 @@ class MagasinController(QObject):
 
     def placer_produit(self, ligne, colonne, produit):
         """Place un produit dans la grille"""
-        self.model.ajouter_article(ligne, colonne, produit)
-    
-    def initialiser(self):
-        """Initialise l'application avec les données de base"""
-        # Charger les produits depuis le CSV
-        if self.model.charger_produits():
-            self.afficher_categories()
+        if self.model.ajouter_article(ligne, colonne, produit):
+            print(f"[DEBUG] Produit '{produit}' placé en ({ligne}, {colonne})")
         else:
-            print("Erreur lors du chargement des produits")
+            print(f"[DEBUG] Échec du placement de '{produit}' en ({ligne}, {colonne})")
+    
     
     def afficher_categories(self):
         """Affiche la liste des catégories dans la vue"""
@@ -54,15 +53,3 @@ class MagasinController(QObject):
         print(f"[DEBUG] Categorie cliquée : {categorie}")
         produits = self.model.produits_par_categorie.get(categorie, [])
         self.vue.afficher_produits(produits)
-    
-    def changer_dimensions_grille(self, colonnes, lignes):
-        """Change les dimensions de la grille"""
-        # todo
-    
-    def changer_nom_magasin(self, nom):
-        """Change le nom du magasin"""
-        # todo
-    
-    def placer_produit(self, ligne, colonne, produit):
-        """Place un produit dans la grille"""
-        # todo

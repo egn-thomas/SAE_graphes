@@ -11,6 +11,7 @@ class VueAdmin(QtWidgets.QWidget):
     # Signaux pour communiquer avec le contrôleur
     categorie_cliquee = QtCore.pyqtSignal(str)
     retour_categories = QtCore.pyqtSignal()
+    cellule_cliquee = QtCore.pyqtSignal(int, int)
     dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
     nom_magasin_change = QtCore.pyqtSignal(str)
     placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
@@ -282,10 +283,11 @@ class VueAdmin(QtWidgets.QWidget):
         self.cellules_grille.clear()
         
         self.graphe = Graphe(rows, cols, parent=self.labels_grille)
-        self.graphe.afficher_grille(self.labels_grille, rows, cols)
+        self.graphe.afficher_grille(self.labels_grille)
         
         for (i, j), drop_area in self.graphe.cellules_graphiques.items():
             drop_area.placer_produit.connect(self.on_placer_produit)
+            drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)  # Ajoutez cette ligne
             self.cellules_grille[(i, j)] = drop_area
     
     def connecter_signaux(self):
@@ -308,6 +310,10 @@ class VueAdmin(QtWidgets.QWidget):
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
         self.placer_produit.emit(ligne, colonne, produit)
+
+    def on_cellule_cliquee(self, ligne, colonne):
+        """Gère le clic sur une cellule"""
+        self.cellule_cliquee.emit(ligne, colonne)
     
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
@@ -358,7 +364,7 @@ class VueAdmin(QtWidgets.QWidget):
         """Efface tous les produits de la grille"""
         for cellule in self.cellules_grille.values():
             cellule.setText("")
-            cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.3); background-color: #00000000;")
+            cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.8); background-color: #00000000;")
 
 
 class DraggableLabel(QtWidgets.QLabel):
