@@ -287,7 +287,7 @@ class VueAdmin(QtWidgets.QWidget):
         
         for (i, j), drop_area in self.graphe.cellules_graphiques.items():
             drop_area.placer_produit.connect(self.on_placer_produit)
-            drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)  # Ajoutez cette ligne
+            drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
             self.cellules_grille[(i, j)] = drop_area
     
     def connecter_signaux(self):
