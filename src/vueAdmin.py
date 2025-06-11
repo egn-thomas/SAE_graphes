@@ -444,10 +444,6 @@ class DropArea(QtWidgets.QLabel):
         if self.magasin:
             self.magasin.enregistrer_produit(self.coord, produit)
             # Mise à jour de la liste de produits pour la cellule
-            if self.coord in self.magasin.coord_produits:
-                self.magasin.coord_produits[self.coord].append(produit)
-            else:
-                self.magasin.coord_produits[self.coord] = [produit]
             if self.coord not in self.magasin.cases_rayon:
                 self.magasin.cases_rayon.add(self.coord)
     
