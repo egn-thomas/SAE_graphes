@@ -4,9 +4,10 @@ from PyQt6.QtCore import pyqtSignal, Qt
 class DropArea(QLabel):
     placer_produit = pyqtSignal(int, int, str)
     cellule_cliquee = pyqtSignal(int, int)
-    
-    def __init__(self, parent=None):
+    parent = None
+    def __init__(self, parent, est_rayon):
         super().__init__(parent)
+        self.est_rayon = est_rayon
         self.setAcceptDrops(True)
         
         # CORRECTION : Initialiser est_rayon par défaut
@@ -18,15 +19,15 @@ class DropArea(QLabel):
             border: 1px solid rgba(0, 0, 0, 0.3);
         """
         self.hover_style_rayon = """
-            background-color: rgba(10, 100, 10, 0.5);
+            background-color: rgba(10, 100, 10, 1);
             border: 1px solid rgba(255, 255, 255, 0.5);
         """
         self.hover_style_couloir = """
-            background-color: rgba(100, 10, 10, 0.5);
+            background-color: rgba(100, 10, 10, 1);
             border: 1px solid rgba(255, 255, 255, 0.5);
         """
         self.filled_style = """
-            background-color: rgba(10, 10, 100, 0.5);
+            background-color: rgba(10, 10, 100, 0.7);
             color: transparent;
             border: 1px solid rgba(255, 255, 255, 0.3);
         """
@@ -36,7 +37,6 @@ class DropArea(QLabel):
 
     def lier_cellule(self, cellule):
         self.est_rayon = cellule.est_rayon
-        print(f"[DEBUG droparea.py] Liaison DropArea ({self.ligne},{self.colonne}) → est_rayon = {self.est_rayon}")
 
     def enterEvent(self, event):
         """Appelé quand la souris entre dans la zone"""

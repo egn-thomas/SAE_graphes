@@ -4,13 +4,13 @@ from PyQt6.QtWidgets import QWidget
 
 class Graphe:
     """Représente le graphe du magasin et gère son affichage"""
-    def __init__(self, nb_lignes: int, nb_colonnes: int, parent: QWidget = None, cases_colorees=None):
+    def __init__(self, nb_lignes: int, nb_colonnes: int, cases_colorees, parent=None):
         self.graphe = {}
         self.cellules_graphiques = {}
         self.nb_lignes = nb_lignes
         self.nb_colonnes = nb_colonnes
+        self.cases_colorees = cases_colorees
         self.parent = parent
-        self.cases_colorees = cases_colorees if cases_colorees else []
         print("Cases colorées reçues :", self.cases_colorees)
         self.initialiser_graphe()
 
@@ -21,22 +21,28 @@ class Graphe:
         
         for i in range(self.nb_lignes):
             for j in range(self.nb_colonnes):
-                est_rayon = (i, j) in self.cases_colorees
+                if (i, j) in self.cases_colorees:
+                    est_rayon = True
+                else:
+                    est_rayon = False
                 print(f"[DEBUG graphe.py] Case ({i},{j}) - est_rayon = {est_rayon}")
                 cellule = Cellule(None, est_rayon)
                 cellule.set_position(i, j)
                 self.graphe[(i, j)] = cellule
 
-        if self.parent:
-            for i in range(self.nb_lignes):
-                for j in range(self.nb_colonnes):
-                    self._creer_cellule_graphique(i, j)
+        for i in range(self.nb_lignes):
+            for j in range(self.nb_colonnes):
+                self._creer_cellule_graphique(i, j)
 
         self.connecter_cellules()
 
     def _creer_cellule_graphique(self, i, j):
         """Crée une cellule graphique"""
-        drop_area = DropArea(self.parent)
+        if (i, j) in self.cases_colorees:
+            est_rayon = True
+        else:
+            est_rayon = False
+        drop_area = DropArea(self.parent, est_rayon)
         drop_area.ligne = i
         drop_area.colonne = j
         cellule_logique = self.graphe[(i, j)]

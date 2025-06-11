@@ -10,8 +10,8 @@ class MagasinController(QObject):
     
     def __init__(self):
         super().__init__()
-        self.model = MagasinModel()
         self.vue = VueAdmin()
+        self.model = MagasinModel()
         self.model.parent = self.vue
         self.categorie_courante = None
         self.connecter_signaux()

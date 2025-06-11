@@ -2,6 +2,7 @@ from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
 from graphe import Graphe
 from droparea import DropArea
+from modelAdmin import MagasinModel
 import os
 
 
@@ -253,12 +254,12 @@ class VueAdmin(QtWidgets.QWidget):
         """Crée la zone du plan avec la grille interactive"""
         self.zone_superposee = QtWidgets.QWidget(self.partie_droite)
         self.zone_superposee.setContentsMargins(0, 0, 0, 0)
-        self.zone_superposee.setFixedSize(760, 900)
+        self.zone_superposee.setFixedSize(720, 900)
         self.zone_superposee.setStyleSheet("background-color: transparent;")
         
         # Image de fond
         self.label_plan = QtWidgets.QLabel(self.zone_superposee)
-        self.label_plan.setGeometry(0, 0, 760, 900)
+        self.label_plan.setGeometry(0, 0, 720, 900)
         
         transform = QTransform().rotate(90)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -267,7 +268,7 @@ class VueAdmin(QtWidgets.QWidget):
         plan = QPixmap(chemin)
         if plan.isNull():
             print(f"Erreur : l'image n'a pas pu être chargée depuis {chemin}")
-            plan = QPixmap(760, 900)
+            plan = QPixmap(720, 900)
         
         plan = plan.transformed(transform)
         self.label_plan.setPixmap(plan)
@@ -292,7 +293,9 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.deleteLater()
         self.cellules_grille.clear()
         
-        self.graphe = Graphe(rows, cols, parent=self.labels_grille)
+        model = MagasinModel()
+        cases_colorees = model.analyser_image()
+        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
         self.graphe.afficher_grille(self.labels_grille)
         
         for (i, j), drop_area in self.graphe.cellules_graphiques.items():
