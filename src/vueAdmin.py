@@ -115,9 +115,7 @@ class VueAdmin(QtWidgets.QWidget):
                 with open("disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
                     reader = csv.reader(csvfile, delimiter=';')
                     lignes = list(reader)
-            else:
-                # Si le fichier n'existe pas, on crée une structure avec uniquement l'en-tête
-                lignes = [["Nom du projet", "Nom du produit", "X", "Y", "Position"]]
+
 
             # Vérifier que le fichier contient au moins une ligne (l'en-tête)
             if len(lignes) > 0:
@@ -129,16 +127,13 @@ class VueAdmin(QtWidgets.QWidget):
                     if len(ligne) >= 1:
                         ligne[0] = nouveau_nom
                     nouvelles_lignes.append(ligne)
-            else:
-                # Si pour une raison quelconque il n'y a pas d'en-tête, on en crée un avec le nouveauNom
-                nouvelles_lignes = [["Nom du projet", "Nom du produit", "X", "Y", "Position"]]
-        
+
         # Réécriture du fichier CSV avec les nouvelles valeurs
             with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerows(nouvelles_lignes)
             
-            print("Mise à jour du nom du projet dans le CSV effectuée.")
+
         except Exception as e:
             print(f"[ERREUR] Lors de la mise à jour du CSV: {e}")
     

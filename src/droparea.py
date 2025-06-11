@@ -71,16 +71,41 @@ class DropArea(QLabel):
             self.cellule_cliquee.emit(self.ligne, self.colonne)
             
     def enregistrer_produit(self, produit):
-        """Enregistre le produit déposé dans le CSV avec les coordonnées formatées.
-           On utilise self.colonne (déjà converti en lettre) et self.ligne (en 1-based) pour la position."""
+        """
+        Enregistre le produit déposé dans le CSV avec les coordonnées formatées.
+        Si le fichier CSV n'existe pas ou est vide, il est initialisé avec un en‑tête incluant la colonne 'Nom du projet'.
+        """
         try:
-            x = self.colonne  # Par exemple, "[" si self.colonne est déjà une lettre
-            y = str(self.ligne)  # self.ligne doit être déjà au format 1-based (exemple: "18")
+            # Récupérer le nom du projet depuis la vue administrateur, si disponible
+            if hasattr(self, "vue_admin") and self.vue_admin is not None:
+                nom_projet = self.vue_admin.nom_magasin.text()
+                if not nom_projet:
+                    nom_projet = ""
+            else:
+                nom_projet = ""
+        
+           
+            x = self.colonne
+            y = str(self.ligne)
             coord_formatee = f"{x}{y}"
-            with open("disposition_magasin.csv", "a", newline='', encoding='utf-8') as csvfile:
+
+            import os
+            file_path = "disposition_magasin.csv"
+            header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+
+            # Vérifier si le fichier existe et déterminer s'il est vide
+            file_exists = os.path.exists(file_path)
+            file_empty = not file_exists or os.stat(file_path).st_size == 0
+
+            with open(file_path, "a", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow([produit, x, y, coord_formatee])
-            print(f"Produit {produit} enregistré dans la cellule {coord_formatee}")
+                # S'il est vide, écrire l'en-tête
+                if file_empty:
+                    writer.writerow(header)
+                # Écriture de la ligne contenant le nom du projet et le produit
+                writer.writerow([nom_projet, produit, x, y, coord_formatee])
+
+            print(f"Produit {produit} enregistré dans le projet {nom_projet} à la cellule {coord_formatee}")
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
             
