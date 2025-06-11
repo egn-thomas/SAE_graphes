@@ -67,7 +67,7 @@ class MagasinModel:
 
 
     def analyser_image(self):
-        """Analyse l'image du plan pour détecter les rayons"""
+        """Analyse l'image du plan pour détecter les rayons selon la couleur moyenne"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
         chemin_image = os.path.join(script_dir, "..", "plan_magasin.jpg")
         
@@ -77,59 +77,53 @@ class MagasinModel:
                 print("Erreur : Impossible de charger l'image.")
                 return []
 
+            # Conversion et rotation
             image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image_rgb = cv2.rotate(image_rgb, cv2.ROTATE_90_CLOCKWISE)
             hauteur, largeur = image_rgb.shape[:2]
-            
-            # Créer l'image de visualisation
-            viz_image = np.zeros((hauteur, largeur, 3), dtype=np.uint8)
-            # Première passe : on met tout en blanc
-            viz_image.fill(255)
-            
-            # Deuxième passe : on colorie uniquement les cases non blanches
+
+            # Image de visualisation : blanc par défaut
+            viz_image = np.full((hauteur, largeur, 3), 255, dtype=np.uint8)
+
+            largeur_case = largeur // self.nb_colonnes
+            hauteur_case = hauteur // self.nb_lignes
+
+            # Première passe : remplit viz_image avec les couleurs moyennes
             for ligne in range(self.nb_lignes):
                 for colonne in range(self.nb_colonnes):
-                    x_debut = colonne * (largeur // self.nb_colonnes)
-                    y_debut = ligne * (hauteur // self.nb_lignes)
-                    x_fin = min(x_debut + (largeur // self.nb_colonnes), largeur)
-                    y_fin = min(y_debut + (hauteur // self.nb_lignes), hauteur)
-                    
-                    zone = image_rgb[y_debut:y_fin, x_debut:x_fin]
-                    moyenne_pixels = np.mean(zone, axis=(0, 1))
-                    
-                    # Si la moyenne des pixels est sous le seuil, on garde la couleur
-                    if np.any(moyenne_pixels < self.seuil_blanc):
-                        viz_image[y_debut:y_fin, x_debut:x_fin] = moyenne_pixels.astype(np.uint8)
+                    x_debut = colonne * largeur_case
+                    y_debut = ligne * hauteur_case
+                    x_fin = min(x_debut + largeur_case, largeur)
+                    y_fin = min(y_debut + hauteur_case, hauteur)
 
-            # Troisième passe : on liste toutes les cases qui ne sont pas blanches pures (#FFFFFF)
+                    zone = image_rgb[y_debut:y_fin, x_debut:x_fin]
+                    moyenne = np.mean(zone, axis=(0, 1))
+
+                    if np.any(moyenne < self.seuil_blanc):
+                        viz_image[y_debut:y_fin, x_debut:x_fin] = (0, 0, 0)
+
+            # Deuxième passe : détecte les cases qui ont été coloriées en noir
             cases_colorees = []
             for ligne in range(self.nb_lignes):
                 for colonne in range(self.nb_colonnes):
-                    x_debut = colonne * (largeur // self.nb_colonnes)
-                    y_debut = ligne * (hauteur // self.nb_lignes)
-                    x_fin = min(x_debut + (largeur // self.nb_colonnes), largeur)
-                    y_fin = min(y_debut + (hauteur // self.nb_lignes), hauteur)
-                    
-                    zone = viz_image[y_debut:y_fin, x_debut:x_fin]
-                    # On vérifie si la zone n'est pas entièrement blanche pure (#FFFFFF)
-                    if not np.all(zone == [255, 255, 255]):
-                        cases_colorees.append((colonne, ligne))
-                        print(f"Case non blanche en ({colonne}, {ligne})")
+                    x_debut = colonne * largeur_case
+                    y_debut = ligne * hauteur_case
+                    x_fin = min(x_debut + largeur_case, largeur)
+                    y_fin = min(y_debut + hauteur_case, hauteur)
 
+                    zone = viz_image[y_debut:y_fin, x_debut:x_fin]
+
+                    # Vérifie si la zone est entièrement noire (0, 0, 0)
+                    if np.all(zone == 0):
+                        cases_colorees.append((ligne, colonne))
+
+            # Sauvegarde de l’image de visualisation
             chemin_viz = os.path.join(script_dir, "..", "visualization.jpg")
             cv2.imwrite(chemin_viz, cv2.cvtColor(viz_image, cv2.COLOR_RGB2BGR))
-            print(f"Nombre de cases non blanches : {len(cases_colorees)}")
+            print(f"Nombre final de cases colorées (non blanches pures) : {len(cases_colorees)}")
 
             return cases_colorees
 
         except Exception as e:
             print(f"Erreur lors de l'analyse de l'image: {e}")
             return []
-
-
-
-    
-
-
-
-
