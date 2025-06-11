@@ -1,0 +1,43 @@
+    def analyser_image(self):
+        """Analyse l'image du plan pour détecter les rayons"""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin_image = os.path.join(script_dir, "..", "plan_magasin.jpg")
+        
+        try:
+            image = cv2.imread(chemin_image)
+            if image is None:
+                print("Erreur : Impossible de charger l'image.")
+                return []
+
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image_rgb = cv2.rotate(image_rgb, cv2.ROTATE_90_CLOCKWISE)
+            hauteur, largeur = image_rgb.shape[:2]
+            
+            viz_image = np.zeros((hauteur, largeur, 3), dtype=np.uint8)
+            viz_image.fill(255)
+            cases_colorees_dev = []
+
+            for ligne in range(self.nb_lignes):
+                for colonne in range(self.nb_colonnes):
+                    x_debut = colonne * (largeur // self.nb_colonnes)
+                    y_debut = ligne * (hauteur // self.nb_lignes)
+                    x_fin = min(x_debut + (largeur // self.nb_colonnes), largeur)
+                    y_fin = min(y_debut + (hauteur // self.nb_lignes), hauteur)
+                    
+                    zone = image_rgb[y_debut:y_fin, x_debut:x_fin]
+                    moyenne_pixels = np.mean(zone, axis=(0, 1))
+                    
+                    if np.any(moyenne_pixels < self.seuil_blanc):
+                        cases_colorees_dev.append((colonne, ligne))
+                        viz_image[y_debut:y_fin, x_debut:x_fin] = moyenne_pixels.astype(np.uint8)
+                        print(f"Case non blanche en ({colonne}, {ligne}) - RGB: {moyenne_pixels}")
+
+            chemin_viz = os.path.join(script_dir, "..", "visualization.jpg")
+            cv2.imwrite(chemin_viz, cv2.cvtColor(viz_image, cv2.COLOR_RGB2BGR))
+            print(f"Nombre de cases non blanches : {len(cases_colorees)}")
+
+            return cases_colorees
+
+        except Exception as e:
+            print(f"Erreur lors de l'analyse de l'image: {e}")
+            return []
