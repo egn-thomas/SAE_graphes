@@ -15,8 +15,7 @@ class VueAdmin(QtWidgets.QWidget):
     dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
     nom_magasin_change = QtCore.pyqtSignal(str)
     placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
-
-
+    recherche_changee = QtCore.pyqtSignal(str)
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -137,6 +136,17 @@ class VueAdmin(QtWidgets.QWidget):
         
         layout_articles.addWidget(self.recherche_articles, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft, stretch=1)
         layout_articles.addWidget(scroll, stretch=12)
+        self.recherche_articles.textChanged.connect(self.on_recherche_changee)
+    
+    def on_recherche_changee(self, texte):
+        """Lorsque le texte change"""
+        self.recherche_changee.emit(texte)
+
+    def filtrer_produits(self, produits, filtre):
+        """filtre les produits selon l'etat de la barre de recherche"""
+        if not filtre:
+            return produits
+        return [p for p in produits if filtre.lower() in p.lower()]
     
     def create_tableau_bord(self):
         """Crée la section du tableau de bord"""
@@ -373,6 +383,7 @@ class DraggableLabel(QtWidgets.QLabel):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setMinimumHeight(40)
+        self.setMaximumHeight(40)
         self.setMaximumWidth(300)
         self.setStyleSheet("color: white; background-color: #333; padding: 5px; border-radius: 3px;")
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)

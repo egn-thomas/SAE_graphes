@@ -12,6 +12,7 @@ class MagasinController(QObject):
         super().__init__()
         self.model = MagasinModel()
         self.vue = VueAdmin()
+        self.categorie_courante = None  # Add this line
         self.connecter_signaux()
         self.initialiser()
     
@@ -22,6 +23,7 @@ class MagasinController(QObject):
         self.vue.retour_categories.connect(self.afficher_categories)
         self.vue.placer_produit.connect(self.placer_produit)
         self.vue.cellule_cliquee.connect(self.cellule_cliquee)
+        self.vue.recherche_changee.connect(self.filtrer_produits)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -29,6 +31,22 @@ class MagasinController(QObject):
             self.afficher_categories()
         else:
             print("Erreur lors du chargement des produits")
+
+    def filtrer_produits(self, texte_recherche):
+        """Filtre les produits selon le texte de recherche dans toutes les catégories"""
+        if not texte_recherche:  # Si la recherche est vide, afficher la catégorie courante
+            if self.categorie_courante:
+                produits = self.model.produits_par_categorie.get(self.categorie_courante, [])
+                self.vue.afficher_produits(produits)
+            return
+
+        produits_filtres = []
+        for categorie, produits in self.model.produits_par_categorie.items():
+            for produit in produits:
+                if texte_recherche.lower() in produit.lower():
+                    produits_filtres.append(produit)
+        
+        self.vue.afficher_produits(produits_filtres)
 
     def cellule_cliquee(self, ligne, colonne):
         """Gère le clic sur une cellule"""
@@ -41,8 +59,7 @@ class MagasinController(QObject):
             print(f"[DEBUG] Produit '{produit}' placé en ({ligne}, {colonne})")
         else:
             print(f"[DEBUG] Échec du placement de '{produit}' en ({ligne}, {colonne})")
-    
-    
+
     def afficher_categories(self):
         """Affiche la liste des catégories dans la vue"""
         categories = self.model.produits_par_categorie.keys()
@@ -50,6 +67,10 @@ class MagasinController(QObject):
 
     def afficher_produits_categorie(self, categorie):
         """Affiche les produits d'une catégorie donnée"""
-        print(f"[DEBUG] Categorie cliquée : {categorie}")
+        self.categorie_courante = categorie
         produits = self.model.produits_par_categorie.get(categorie, [])
+        texte_recherche = self.vue.recherche_articles.text()
+        if texte_recherche:
+            produits = [p for p in produits if texte_recherche.lower() in p.lower()]
         self.vue.afficher_produits(produits)
+        print(f"[DEBUG] Affichage des produits de la catégorie : {categorie}")
