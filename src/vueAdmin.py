@@ -82,8 +82,8 @@ class VueAdmin(QtWidgets.QWidget):
 
                     try:
                         # Convertir les coordonnées en indices 0‑base
-                        col_index = int(col_str) - 1
-                        row_index = int(ligne_str) - 1
+                        col_index = int(col_str)
+                        row_index = int(ligne_str)
                     except ValueError:
                         # Si la conversion échoue, on passe à la prochaine ligne
                         continue
