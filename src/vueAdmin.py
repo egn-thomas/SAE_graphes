@@ -387,6 +387,6 @@ class DraggableLabel(QtWidgets.QLabel):
             
             pixmap = self.grab()
             drag.setPixmap(pixmap)
-            drag.setHotSpot(event.pos())
+            drag.setHotSpot(QtCore.QPoint(0, 0))
             
             drag.exec(QtCore.Qt.DropAction.MoveAction)
