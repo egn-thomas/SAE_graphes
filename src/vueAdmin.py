@@ -5,6 +5,7 @@ from droparea import DropArea
 import os
 import csv
 
+
 class VueAdmin(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
     
@@ -35,7 +36,7 @@ class VueAdmin(QtWidgets.QWidget):
          # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
         # Charger la sauvegarde existante (si présente) pour remplir le magasin.
-        self.charger_sauvegarde()
+        self.charger_csv_automatiquement()
         
         self.popup_actuelle = None
         
@@ -47,63 +48,67 @@ class VueAdmin(QtWidgets.QWidget):
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
-    def charger_sauvegarde(self):
+    def charger_csv_automatiquement(self):
         """
-        Charge la sauvegarde du magasin à partir du fichier CSV 'disposition_magasin.csv'.
-        Le fichier doit avoir au moins 5 colonnes :
-          - Nom du projet
-          - Nom du produit
-          - X (colonne, en lettre)
-          - Y (ligne, en 1-base)
-          - Position (formatée, ex: "A1")
-      
-        La fonction lit le nom du projet (première colonne) de la première ligne 
-        et met à jour le widget prévu pour l'afficher. Ensuite, pour chaque ligne,
-        elle appelle la méthode placer_produit_dans_grille pour recharger le produit dans la grille.
+        Lit le fichier CSV "disposition_magasin.csv" et met à jour automatiquement
+        les cellules de la grille (DropArea) en fonction des coordonnées.
+        
+        Le fichier CSV doit comporter 5 colonnes, dans cet ordre :
+        - Nom du projet
+        - Nom du produit
+        - Colonne (numérique, en 1-base)
+        - Ligne (numérique, en 1-base)
+        - Position (optionnel : par exemple "A1")
+        
+        Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0‑base,
+        recherche la DropArea correspondante, et met à jour son texte, son style (background)
+        et son contenu.
         """
+
         try:
             with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
-                reader = csv.reader(csvfile, delimiter=';')
+                reader = csv.reader(csvfile, delimiter=";")
                 header = next(reader, None)  # Ignorer l'en-tête
                 project_name = None
+                
                 for row in reader:
                     if len(row) < 5:
-                        continue  # Vérifier que la ligne contient toutes les données nécessaires
-                    nom_projet, produit, colonne, ligne, position = row
-                    # Récupérer le nom du projet depuis la première ligne lue
-                    if not project_name:
+                        continue  # Ignorer les lignes incomplètes
+                    nom_projet, produit, col_str, ligne_str, position = row
+
+                    # Conserver le nom du projet depuis la première ligne valide
+                    if project_name is None:
                         project_name = nom_projet
-                    # Placer le produit dans la grille
-                    self.placer_produit_dans_grille(produit, colonne, ligne, position)
-                # Mettre à jour le widget contenant le nom du projet s'il a été lu
+
+                    try:
+                        # Convertir les coordonnées en indices 0‑base
+                        col_index = int(col_str) - 1
+                        row_index = int(ligne_str) - 1
+                    except ValueError:
+                        # Si la conversion échoue, on passe à la prochaine ligne
+                        continue
+
+                    # Parcourir toutes les DropArea pour mettre à jour la bonne cellule
+                    for drop_area in self.labels_grille.findChildren(DropArea):
+                        # On suppose que drop_area.colonne et drop_area.ligne sont stockés en indices 0‑base
+                        if drop_area.colonne == col_index and drop_area.ligne == row_index:
+                            if produit.strip():
+                                drop_area.setText(produit)
+                                drop_area.setStyleSheet(drop_area.filled_style)
+                                drop_area.articles = [produit]  # Remplacer complètement l'ancien contenu
+                            else:
+                                drop_area.setText("")
+                                drop_area.setStyleSheet(drop_area.default_style)
+                                drop_area.articles = []
+                            break  # Une fois la cellule trouvée et mise à jour, on passe à la ligne suivante
                 if project_name:
                     self.nom_magasin.setText(project_name)
-                    # Optionnel : Mettre à jour le modèle si nécessaire
-                    if hasattr(self, 'magasin'):
-                        self.magasin.setNomMagasin(project_name)
-            print("Chargement de la sauvegarde terminé avec succès.")
+            print("Chargement automatique terminé avec succès.")
         except FileNotFoundError:
-            print("⚠ Aucun fichier de sauvegarde ('disposition_magasin.csv') trouvé.")
+            print("⚠ Le fichier 'disposition_magasin.csv' est introuvable.")
         except Exception as e:
-            print(f"[ERREUR] Problème lors du chargement de la sauvegarde: {e}")
+            print(f"[ERREUR] lors du chargement automatique : {e}")
 
-    def placer_produit_dans_grille(self, produit, colonne, ligne, position):
-        """Parcourt les cellules du quadrillage pour placer le produit sauvegardé."""
-        # On recherche tous les widgets DropArea dans la zone de superposition (grille)
-        for cell in self.labels_grille.findChildren(DropArea):
-            # Si la cellule possède des attributs correspondant à la position sauvegardée
-            if cell.colonne == colonne and str(cell.ligne) == str(ligne):
-                cell.setText(produit)
-                cell.setStyleSheet("background-color: rgba(100, 100, 100, 0.6); color: white; border-radius: 4px;")
-                # Mettre à jour le dictionnaire des articles de la cellule
-                cellule = (cell.ligne, cell.colonne)
-                if cellule not in cell.ajouter_contenu:
-                    cell.ajouter_contenu[cellule] = []
-                    if produit not in cell.ajouter_contenu[cellule]:
-                        cell.articles_par_cellule[cellule].append(produit)
-                        print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
-                        break
-    
     def maj_nom_projet_csv(self, nouveau_nom):
         """
         Met à jour le CSV 'disposition_magasin.csv' en modifiant la première colonne (Nom du projet)
@@ -132,29 +137,28 @@ class VueAdmin(QtWidgets.QWidget):
             with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerows(nouvelles_lignes)
-            
 
         except Exception as e:
             print(f"[ERREUR] Lors de la mise à jour du CSV: {e}")
     
     
     def afficher_popup_articles(self, ligne, colonne, articles):
-        """Affiche une popup avec les articles d'une cellule"""
+        """Affiche une popup listant les articles d'une cellule cliquée."""
         if not articles:
             return
-        
-        # Fermer la popup existante
+
+        # Ferme la popup actuelle, s'il y en a une.
         if self.popup_actuelle:
             self.popup_actuelle.hide()
             self.popup_actuelle.deleteLater()
-        
-        # Créer et afficher la nouvelle popup
+
+        # Crée la nouvelle popup
         popup = self.creer_popup_articles(articles)
         popup.show()
         self.popup_actuelle = popup
 
     def creer_popup_articles(self, articles):
-        """Crée une popup pour afficher les articles d'une cellule"""
+        """Crée une popup affichant la liste des articles."""
         popup = QtWidgets.QWidget(self)
         popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
         popup.setStyleSheet("""
@@ -163,36 +167,25 @@ class VueAdmin(QtWidgets.QWidget):
             border: 1px solid #444;
             border-radius: 5px;
         """)
-        
+
         layout = QtWidgets.QVBoxLayout(popup)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
-        
-        # Titre de la popup
+
         titre = QtWidgets.QLabel("Articles dans cette case:", popup)
         titre.setStyleSheet("font-weight: bold; font-size: 14px;")
         layout.addWidget(titre)
-        
-        # Liste des articles
+
         for article in articles:
             label = QtWidgets.QLabel(article, popup)
             label.setStyleSheet("padding: 5px;")
             layout.addWidget(label)
-        
-        # Ajuster la taille de la popup
+
         popup.adjustSize()
-        
-        # Positionner la popup au centre de l'écran
+        # Positionne la popup au centre de l'écran
         screen = QtWidgets.QApplication.primaryScreen().geometry()
-        popup_width = popup.width()
-        popup_height = popup.height()
-        
-        # Calculer la position centrale
-        x = (screen.width() - popup_width) // 2
-        y = (screen.height() - popup_height) // 2
-        
-        popup.move(x, y)
-        
+        popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
+
         return popup
 
     def create_partie_gauche(self):
@@ -396,31 +389,35 @@ class VueAdmin(QtWidgets.QWidget):
     
     def effacer_projet(self):
         """
-        Réinitialise le fichier 'disposition_magasin.csv' (en conservant uniquement l'en-tête)
-        et vide le contenu des cellules de la grille du magasin.
-        Cette fonction ne ferme pas l'application, même en cas d'erreur.
+        Réinitialise le fichier 'disposition_magasin.csv', vide le contenu
+        de toutes les cellules de la grille et supprime la popup active,
+        sans fermer l'application. Ceci permet de nettoyer l'affichage
+        tout en laissant l'interface active pour de nouvelles actions.
         """
-        # Effacer le contenu du fichier CSV en réécrivant un en-tête vide
+        import csv, os
         try:
+            # Réinitialiser le CSV (en gardant bien l'entête)
             with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                # Remplacez l'en-tête selon le format attendu de votre CSV
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
-            print("Fichier CSV effacé avec succès.")
+            print("Fichier CSV réinitialisé avec succès.")
         except Exception as e:
-            print(f"[ERREUR] Problème lors de l'effacement du CSV: {e}")
+            print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
 
-        # Effacer le contenu de toutes les cellules de la grille
-        try:
-            for cell in self.labels_grille.findChildren(DropArea):
-                cell.setText("")
-                cell.setStyleSheet(cell.default_style)
-                # Suppression éventuelle de la liste d'articles dans la cellule.
-                if hasattr(cell, "articles"):
-                    cell.articles = []
-            print("Le contenu des cellules a été effacé.")
-        except Exception as e:
-            print(f"[ERREUR] Problème lors de l'effacement du contenu des cellules: {e}")
+        # Effacer le contenu de toutes les cellules de la grille (niveau affichage)
+        for cell in self.labels_grille.findChildren(DropArea):
+            cell.setText("")
+            cell.setStyleSheet(cell.default_style)
+            # Réinitialiser complètement le contenu interne
+            cell.articles = []
+
+        # Supprimer la popup active, sans fermer la fenêtre principale
+        if hasattr(self, "popup_actuelle") and self.popup_actuelle:
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
+            self.popup_actuelle = None
+
+        print("Contenu du projet et pop-up effacés. L'application reste ouverte.")
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
@@ -447,9 +444,18 @@ class VueAdmin(QtWidgets.QWidget):
         self.placer_produit.emit(ligne, colonne, produit)
 
     def on_cellule_cliquee(self, ligne, colonne):
-        """Gère le clic sur une cellule"""
-        self.cellule_cliquee.emit(ligne, colonne)
-    
+        """
+        Gère le clic sur une cellule : recherche la DropArea correspondante dans la grille.
+        Si la cellule possède des articles, affiche une popup avec le contenu.
+        """
+        # Parcourir toutes les DropArea dans la grille
+        for drop_area in self.labels_grille.findChildren(DropArea):
+            if drop_area.ligne == ligne and drop_area.colonne == colonne:
+                # S'il y a un contenu dans la cellule, afficher la popup
+                if drop_area.articles and len(drop_area.articles) > 0:
+                    self.afficher_popup_articles(ligne, colonne, drop_area.articles)
+                break
+        
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
         self.clear_layout(self.layout_articles_box)

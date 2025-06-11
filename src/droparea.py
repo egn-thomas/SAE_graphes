@@ -57,18 +57,21 @@ class DropArea(QLabel):
         super().leaveEvent(event)
 
     def dropEvent(self, event):
-        """Active quand un élément est déposé"""
         produit = event.mimeData().text()
         self.setText(produit)
         self.setStyleSheet(self.filled_style)
         self.placer_produit.emit(self.ligne, self.colonne, produit)
+        # Remplacer l'ancien contenu par le nouveau
+        self.articles = [produit]
         event.acceptProposedAction()
         self.enregistrer_produit(produit)
-
+        
     def mousePressEvent(self, event):
-        """Gère le clic sur la cellule"""
+        """Gère le clic sur la cellule uniquement si elle affiche un produit"""
         if event.button() == Qt.MouseButton.LeftButton:
-            self.cellule_cliquee.emit(self.ligne, self.colonne)
+            # Si le texte est vide, aucun produit n'est enregistré
+            if self.text().strip() != "":
+                self.cellule_cliquee.emit(self.ligne, self.colonne)
             
     def enregistrer_produit(self, produit):
         """

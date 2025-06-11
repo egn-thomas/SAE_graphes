@@ -23,7 +23,7 @@ class Cellule:
             self.contenu.remove(element)
             return True
         return False
-
+    
     def set_position(self, ligne, colonne):
         """Définit la position de la cellule"""
         self.position = (ligne, colonne)
