@@ -45,22 +45,47 @@ class VueAdmin(QtWidgets.QWidget):
         print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
         with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, delimiter=';')
-            writer.writerow(["Nom du produit", "X", "Y", "Position"])
+            writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
     def charger_sauvegarde(self):
-        """Charge la sauvegarde du magasin et place les produits dans leur case."""
+        """
+        Charge la sauvegarde du magasin à partir du fichier CSV 'disposition_magasin.csv'.
+        Le fichier doit avoir au moins 5 colonnes :
+          - Nom du projet
+          - Nom du produit
+          - X (colonne, en lettre)
+          - Y (ligne, en 1-base)
+          - Position (formatée, ex: "A1")
+      
+        La fonction lit le nom du projet (première colonne) de la première ligne 
+        et met à jour le widget prévu pour l'afficher. Ensuite, pour chaque ligne,
+        elle appelle la méthode placer_produit_dans_grille pour recharger le produit dans la grille.
+        """
         try:
             with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
-                print("ouverture d'un fichier de sauvegarde")
                 reader = csv.reader(csvfile, delimiter=';')
                 header = next(reader, None)  # Ignorer l'en-tête
+                project_name = None
                 for row in reader:
-                    if len(row) < 4:
-                        continue
-                    produit, colonne, ligne, position = row
+                    if len(row) < 5:
+                        continue  # Vérifier que la ligne contient toutes les données nécessaires
+                    nom_projet, produit, colonne, ligne, position = row
+                    # Récupérer le nom du projet depuis la première ligne lue
+                    if not project_name:
+                        project_name = nom_projet
+                    # Placer le produit dans la grille
                     self.placer_produit_dans_grille(produit, colonne, ligne, position)
+                # Mettre à jour le widget contenant le nom du projet s'il a été lu
+                if project_name:
+                    self.nom_magasin.setText(project_name)
+                    # Optionnel : Mettre à jour le modèle si nécessaire
+                    if hasattr(self, 'magasin'):
+                        self.magasin.setNomMagasin(project_name)
+            print("Chargement de la sauvegarde terminé avec succès.")
         except FileNotFoundError:
-            print("⚠ Aucun fichier de sauvegarde trouvé.")
+            print("⚠ Aucun fichier de sauvegarde ('disposition_magasin.csv') trouvé.")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors du chargement de la sauvegarde: {e}")
 
     def placer_produit_dans_grille(self, produit, colonne, ligne, position):
         """Parcourt les cellules du quadrillage pour placer le produit sauvegardé."""
@@ -79,6 +104,43 @@ class VueAdmin(QtWidgets.QWidget):
                         print(f" Produit {produit} rechargé dans la cellule {cell.colonne}{cell.ligne}")
                         break
     
+    def maj_nom_projet_csv(self, nouveau_nom):
+        """
+        Met à jour le CSV 'disposition_magasin.csv' en modifiant la première colonne (Nom du projet)
+        pour toutes les lignes, et ce en temps réel à chaque modification.
+        """
+        try:
+            # Si le fichier existe, on le lit
+            if os.path.exists("disposition_magasin.csv"):
+                with open("disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
+                    reader = csv.reader(csvfile, delimiter=';')
+                    lignes = list(reader)
+            else:
+                # Si le fichier n'existe pas, on crée une structure avec uniquement l'en-tête
+                lignes = [["Nom du projet", "Nom du produit", "X", "Y", "Position"]]
+
+            # Vérifier que le fichier contient au moins une ligne (l'en-tête)
+            if len(lignes) > 0:
+                # Conserver l'en-tête intacte et mettre à jour la première colonne des données
+                en_tete = lignes[0]
+                nouvelles_lignes = [en_tete]
+                for ligne in lignes[1:]:
+                    # Mise à jour de la première colonne
+                    if len(ligne) >= 1:
+                        ligne[0] = nouveau_nom
+                    nouvelles_lignes.append(ligne)
+            else:
+                # Si pour une raison quelconque il n'y a pas d'en-tête, on en crée un avec le nouveauNom
+                nouvelles_lignes = [["Nom du projet", "Nom du produit", "X", "Y", "Position"]]
+        
+        # Réécriture du fichier CSV avec les nouvelles valeurs
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerows(nouvelles_lignes)
+            
+            print("Mise à jour du nom du projet dans le CSV effectuée.")
+        except Exception as e:
+            print(f"[ERREUR] Lors de la mise à jour du CSV: {e}")
     
     
     def afficher_popup_articles(self, ligne, colonne, articles):
@@ -379,7 +441,8 @@ class VueAdmin(QtWidgets.QWidget):
         self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
         self.bouton_effacer.clicked.connect(self.effacer_projet)
-    
+        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
+
     def on_dimensions_changees(self):
         """Émet le signal de changement de dimensions"""
         self.dimensions_changees.emit(self.spinTableauBordColonnes.value(), self.spinTableauBordLignes.value())
