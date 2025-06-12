@@ -115,7 +115,7 @@ class DropArea(QLabel):
             coord_formatee = f"{x}{y}"
 
             import os
-            file_path = "../sauvegarde_rapide"
+            file_path = "../magasins/sauvegarde_rapide.csv"
             header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
             # Vérifier si le fichier existe et déterminer s'il est vide

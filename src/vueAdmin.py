@@ -48,8 +48,8 @@ class VueAdmin(QtWidgets.QWidget):
     
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
-        if not os.path.exists("../sauvegarde_rapide"):
-            with open("../sauvegarde_rapide", "w", newline='', encoding="utf-8") as csvfile:
+        if not os.path.exists("../magasins/sauvegarde_rapide.csv"):
+            with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
@@ -120,13 +120,13 @@ class VueAdmin(QtWidgets.QWidget):
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
-        Met à jour le CSV '../sauvegarde_rapide' en modifiant la première colonne (Nom du projet)
+        Met à jour le CSV '../magasins/sauvegarde_rapide.csv' en modifiant la première colonne (Nom du projet)
         pour toutes les lignes, et ce en temps réel à chaque modification.
         """
         try:
             # Si le fichier existe, on le lit
-            if os.path.exists("../sauvegarde_rapide"):
-                with open("../sauvegarde_rapide", "r", newline='', encoding="utf-8") as csvfile:
+            if os.path.exists("../magasins/sauvegarde_rapide.csv"):
+                with open("../magasins/sauvegarde_rapide.csv", "r", newline='', encoding="utf-8") as csvfile:
                     reader = csv.reader(csvfile, delimiter=';')
                     lignes = list(reader)
 
@@ -141,7 +141,7 @@ class VueAdmin(QtWidgets.QWidget):
                     nouvelles_lignes.append(ligne)
 
         # Réécriture du fichier CSV avec les nouvelles valeurs
-            with open("../sauvegarde_rapide", "w", newline='', encoding="utf-8") as csvfile:
+            with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerows(nouvelles_lignes)
 
@@ -466,13 +466,13 @@ class VueAdmin(QtWidgets.QWidget):
             
     def effacer_projet(self):
         """
-        Réinitialise le fichier '../sauvegarde_rapide', vide le contenu
+        Réinitialise le fichier '../magasins/sauvegarde_rapide.csv', vide le contenu
         de toutes les cellules de la grille, efface le nom du projet dans le widget
         et supprime la popup active,
         """
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
-            with open("../sauvegarde_rapide", "w", newline='', encoding="utf-8") as csvfile:
+            with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
             print("Fichier CSV réinitialisé avec succès.")
@@ -591,26 +591,25 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.setText("")
             cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.8); background-color: #00000000;")
 
-    
     def sauvegarder_tous_les_produits(self):
         """
-        Parcourt toutes les cellules de la grille et enregistre d'un coup tout
-        les produits dans le fichier CSV "../disposition_magasin_sauvegarde.csv".
-        
-        Le CSV comporte 5 colonnes:
-        - Nom du projet (récupéré depuis self.nom_magasin)
-        - Nom du produit
-        - X (coordonnée colonne, valeur numérique)
-        - Y (coordonnée ligne, valeur numérique)
-        - Position (coordonnées formatées, ici "XY")
-        
-        Cette méthode écrase l'ancien contenu,
-        et réécrit la grille actuelle.
+        Ouvre un explorateur de fichiers pour permettre à l'utilisateur
+        de choisir où sauvegarder les données de la grille au format CSV.
         """
-        file_path = "../disposition_magasin_sauvegarde.csv"
-        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+        # Ouvre le dialogue pour choisir le fichier
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Enregistrer la disposition du magasin",
+            "disposition_magasin.csv",  # nom par défaut
+            "Fichiers CSV (*.csv);;Tous les fichiers (*)"
+        )
 
-        # Récupérer le nom du projet depuis le widget
+        # Si l'utilisateur annule, on quitte la méthode
+        if not file_path:
+            print("[INFO] Sauvegarde annulée par l'utilisateur.")
+            return
+
+        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
         nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
 
         try:
@@ -620,27 +619,21 @@ class VueAdmin(QtWidgets.QWidget):
 
                 # Parcourir toutes les cellules de la grille
                 for drop_area in self.labels_grille.findChildren(DropArea):
-                    # Si l'attribut 'articles' existe et contient des produits, on les compte
                     if hasattr(drop_area, "articles") and drop_area.articles:
                         produit_counts = Counter(drop_area.articles)
-                        
-                        x = drop_area.colonne  # Coordonnée horizontale (0-base)
-                        y = drop_area.ligne    # Coordonnée verticale (0-base)
+                        x, y = drop_area.colonne, drop_area.ligne
                         coord_formatee = f"{x}{y}"
-                        
-                        # Pour chaque produit dans cette cellule
                         for prod, quantite in produit_counts.items():
                             produit_str = f"{prod} x{quantite}" if quantite > 1 else prod
                             writer.writerow([nom_projet, produit_str, x, y, coord_formatee])
                     else:
-                        # Si aucune liste n'est associée, on vérifie le texte affiché de la cellule.
                         produit = drop_area.text().strip()
                         if produit:
-                            x = drop_area.colonne
-                            y = drop_area.ligne
+                            x, y = drop_area.colonne, drop_area.ligne
                             coord_formatee = f"{x}{y}"
                             writer.writerow([nom_projet, produit, x, y, coord_formatee])
-            print("Tous les produits ont été sauvegardés avec succès dans le fichier de sauvegarde.")
+
+            print(f"[INFO] Tous les produits ont été sauvegardés dans : {file_path}")
         except Exception as e:
             print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
         

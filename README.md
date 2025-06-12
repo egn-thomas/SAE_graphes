@@ -36,7 +36,7 @@ La grille du magasin est ajustable via des boîtes numériques.
 ### Interactions avancées
 
 - Un clic sur une case du magasin affiche un popup avec les articles qu'elle contient.
-- Il est possible de supprimer un article de la case en cliquant sur son nom.
+- Il est possible de supprimer un article de la case en cliquant sur son nom dans le popup.
 
 ## Langages et technologies utilisés
 
