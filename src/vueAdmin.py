@@ -18,6 +18,7 @@ class VueAdmin(QtWidgets.QWidget):
     nom_magasin_change = QtCore.pyqtSignal(str)
     placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
     recherche_changee = QtCore.pyqtSignal(str)
+    sauvegarder_signal = QtCore.pyqtSignal()
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -31,7 +32,10 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partie_gauche()
         self.create_partie_droite()
         
+        self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
+        
+        
         
          # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
@@ -39,7 +43,8 @@ class VueAdmin(QtWidgets.QWidget):
         self.charger_csv_automatiquement()
         
         self.popup_actuelle = None
-        
+    
+    
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
     if not os.path.exists("disposition_magasin.csv"):
@@ -60,7 +65,7 @@ class VueAdmin(QtWidgets.QWidget):
         - Ligne (numérique, en 1-base)
         - Position (optionnel : par exemple "A1")
         
-        Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0‑base,
+        Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0 base,
         recherche la DropArea correspondante, et met à jour son texte, son style (background)
         et son contenu.
         """
@@ -448,6 +453,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
         self.bouton_effacer.clicked.connect(self.effacer_projet)
         self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
+        self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
 
     def on_dimensions_changees(self):
         """Émet le signal de changement de dimensions"""
@@ -469,6 +475,19 @@ class VueAdmin(QtWidgets.QWidget):
                 if drop_area.articles and len(drop_area.articles) > 0:
                     self.afficher_popup_articles(ligne, colonne, drop_area.articles)
                 break
+    
+    def on_bouton_sauvegarder_clicked(self):
+        """
+        Slot appelé lorsqu'on clique sur le bouton Sauvegarder.
+        Il émet le signal de sauvegarde et n'appelle aucune méthode de fermeture.
+        """
+        try:
+            self.sauvegarder_signal.emit()
+            print("Signal de sauvegarde émis.")
+        except Exception as e:
+            # Loguez l'exception pour déboguer sans fermer l'appli
+            print(f"[ERREUR] lors du clic sur le bouton Sauvegarder: {e}")
+        
         
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
@@ -521,7 +540,50 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.setText("")
             cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.8); background-color: #00000000;")
 
+    
+    def sauvegarder_tous_les_produits(self):
+        """
+        Parcourt toutes les cellules de la grille (DropArea) et enregistre d'un coup
+        les produits dans le fichier CSV "disposition_magasin_sauvegarde.csv".
+        
+        Le CSV comporte 5 colonnes:
+        - Nom du projet (récupéré depuis self.nom_magasin)
+        - Nom du produit
+        - X (coordonnée colonne, valeur numérique)
+        - Y (coordonnée ligne, valeur numérique)
+        - Position (coordonnées formatées, ici "XY")
+        
+        Cette méthode ouvre le fichier en mode écriture, ce qui écrase l'ancien contenu,
+        et écrit l'état actuel de la grille.
+        """
+        file_path = "disposition_magasin_sauvegarde.csv"
+        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
+        # Récupération du nom du projet
+        nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
+
+        try:
+            # Ouvre le fichier en mode écriture pour réécrire entièrement le CSV
+            with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(header)
+
+                # Parcourir toutes les cellules de la grille
+                for drop_area in self.labels_grille.findChildren(DropArea):
+                    produit = drop_area.text().strip()  # Récupère le texte affiché dans la cellule
+                    if produit:
+                        # On suppose que drop_area.colonne et drop_area.ligne contiennent des valeurs numériques en 0-base.
+                        # Si vous travaillez en 1-base, convertissez-les ici ou ajustez la logique.
+                        x = drop_area.colonne  
+                        y = drop_area.ligne
+                        # Exemple de position formatée : concaténation directe de x et y
+                        coord_formatee = f"{x}{y}"
+                        writer.writerow([nom_projet, produit, x, y, coord_formatee])
+            print("Tous les produits ont été sauvegardés avec succès dans le fichier de sauvegarde.")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
+        
+            
 class DraggableLabel(QtWidgets.QLabel):
     """Label draggable pour les produits"""
     
