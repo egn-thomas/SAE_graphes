@@ -6,22 +6,9 @@ from login import PageConnexion
 
 def main():
     app = QApplication(sys.argv)
-
-
     login_dialog = PageConnexion()
-    if login_dialog.exec():
-        if login_dialog.role == "admin":
-            controller = MagasinController()
-        elif login_dialog.role == "client":
-            controller = ClientController()
-        else:
-            print("Rôle inconnu, fermeture.")
-            sys.exit()
-        controller.vue.show()
-        sys.exit(app.exec())
-    else:
-        print("Connexion annulée.")
-        sys.exit()
+    login_dialog.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()

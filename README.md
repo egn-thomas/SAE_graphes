@@ -29,6 +29,8 @@ Les boutons de contrôle sont situés en bas à gauche :
 - **Sauvegarder** : enregistre la disposition actuelle dans un fichier CSV.
 - **Effacer** : réinitialise la disposition actuelle du magasin.
 
+Une bibliothèque de magasins pré-enregistrés est déjà présente dans `magasins/`
+
 Une sauvegarde automatique est effectuée en continu dans un fichier `sauvegarde_rapide.csv` pour prévenir les pertes de données.
 
 La grille du magasin est ajustable via des boîtes numériques.
@@ -55,7 +57,7 @@ sae_graphe/
 │   ├── droparea.py
 │   ├── graphe.py
 │   └── (...)
-├── Magazins/
+├── magazins/
 │   ├── magasin1.csv
 │   ├── magasin2.csv
 │   └── (...)

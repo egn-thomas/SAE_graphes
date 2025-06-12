@@ -2,6 +2,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QObject
 from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
+from login import PageConnexion
 
 
 class MagasinController(QObject):
@@ -31,6 +32,7 @@ class MagasinController(QObject):
         self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
         self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
         self.vue.bouton_popup_signal.connect(self.supprimer_article)
+        self.vue.deconnecter_signal.connect(self.deconnecter)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -43,11 +45,22 @@ class MagasinController(QObject):
         print(f"[CONTROLLER] Suppression de {produit} à ({ligne}, {colonne}) demandée")
         self.model.effacer_element_grille(ligne, colonne, produit)
         self.vue.supprimer_article_cellule(ligne, colonne, produit)
+    
+    def deconnecter(self):
+        self.vue.close()
+        self.connexion = PageConnexion()
+        self.connexion.show()
 
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
         self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
+        self.model.initialiser_graphe()
+
+    def changer_lignes(self, valeur):
+        print(f"Lignes modifiées : {valeur}")
+        self.model.nb_lignes = valeur
+        self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
 
     def timer_lignes(self):
@@ -59,12 +72,6 @@ class MagasinController(QObject):
                 self.changer_lignes(valeur_actuelle)
 
         QtCore.QTimer.singleShot(1000, verifier_stabilite)
-
-    def changer_lignes(self, valeur):
-        print(f"Lignes modifiées : {valeur}")
-        self.model.nb_lignes = valeur
-        self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
-        self.model.initialiser_graphe()
 
     def filtrer_produits(self, texte_recherche):
         """Filtre les produits selon le texte de recherche dans toutes les catégories"""

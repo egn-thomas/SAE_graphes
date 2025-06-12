@@ -1,12 +1,14 @@
-from PyQt6 import QtCore, QtWidgets, QtGui
-from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QFileDialog
 from graphe import Graphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
+
+from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtWidgets import QFileDialog
+
+from collections import Counter
 import os
 import csv
-from collections import Counter
 
 class VueAdmin(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
@@ -22,6 +24,7 @@ class VueAdmin(QtWidgets.QWidget):
     recherche_changee = QtCore.pyqtSignal(str)
     sauvegarder_signal = QtCore.pyqtSignal()
     bouton_popup_signal = QtCore.pyqtSignal(int, int, str)
+    deconnecter_signal = QtCore.pyqtSignal()
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -217,10 +220,6 @@ class VueAdmin(QtWidgets.QWidget):
         except Exception as e:
             print("Erreur dans creer_popup_articles :", e)
             return None
-    
-    def debug_emit(self, l, c, p):
-        print(f"[DEBUG VUE] Suppression demandée : {p} à ({l}, {c})")
-        self.bouton_popup_signal.emit(l, c, p)
 
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
@@ -363,7 +362,7 @@ class VueAdmin(QtWidgets.QWidget):
         layout_header.addWidget(self.label)
         layout_header.addWidget(self.nom_magasin)
         
-            # Ajout de la légende1
+        # légende1
         legend_container1 = QtWidgets.QWidget(self.partie_droite)
         legend_layout1 = QtWidgets.QHBoxLayout(legend_container1)
         legend_layout1.setContentsMargins(10, 0, 10, 10)
@@ -397,12 +396,19 @@ class VueAdmin(QtWidgets.QWidget):
         # Zone de texte
         legend_label2 = QtWidgets.QLabel("rayons", legend_container2)
         legend_label2.setStyleSheet("color: white; font-size: 14px;")
+
+        bouton_deconnection = QtWidgets.QPushButton("Se déconnecter")
+        bouton_deconnection.setStyleSheet("padding: 5px; margin-left: 20px")
+        bouton_deconnection.clicked.connect(self.fermer_et_connexion)
+
         
         legend_layout2.addWidget(legend_color2)
         legend_layout2.addWidget(legend_label2)
         
         layout_header.addWidget(legend_container1)
         layout_header.addWidget(legend_container2)
+        layout_header.addWidget(bouton_deconnection)
+
         
         # Zone du plan avec grille
         self.create_zone_plan()
@@ -503,6 +509,9 @@ class VueAdmin(QtWidgets.QWidget):
         self.bouton_ouvrir.clicked.connect(self.charger_csv)
         self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
         self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
+
+    def fermer_et_connexion(self):
+        self.deconnecter_signal.emit()
 
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
