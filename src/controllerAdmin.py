@@ -20,17 +20,10 @@ class MagasinController(QObject):
     
     def connecter_signaux(self):
         """Connecte les signaux de la vue aux méthodes du contrôleur"""
-        # Signaux principaux de la vue
-            # Barre d'outils
         self.vue.bouton_effacer.clicked.connect(self.effacer_projet)
         self.vue.nom_magasin.textChanged.connect(self.mise_a_jour_nom_magasin)
         
-        # Zone produits
         self.vue.recherche_articles.textChanged.connect(self.filtrer_produits)
-        # self.vue.afficher_categories.itemClicked.connect(self.afficher_produits_categorie)
-        # self.vue.bouton_retour.clicked.connect(self.afficher_categories)
-        
-        # Dimensions
         self.vue.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
         self.vue.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         
@@ -52,14 +45,12 @@ class MagasinController(QObject):
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
-        time.sleep(1)
         self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
         self.model.initialiser_graphe()
 
     def changer_lignes(self, valeur):
         print(f"Lignes modifiées : {valeur}")
         self.model.nb_lignes = valeur
-        time.sleep(1)
         self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
 
