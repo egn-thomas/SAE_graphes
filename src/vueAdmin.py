@@ -14,7 +14,8 @@ class VueAdmin(QtWidgets.QWidget):
     categorie_cliquee = QtCore.pyqtSignal(str)
     retour_categories = QtCore.pyqtSignal()
     cellule_cliquee = QtCore.pyqtSignal(int, int)
-    dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
+    nombre_ligne_changee = QtCore.pyqtSignal(int)
+    nombre_colonne_changee = QtCore.pyqtSignal(int)
     nom_magasin_change = QtCore.pyqtSignal(str)
     placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
     recherche_changee = QtCore.pyqtSignal(str)
@@ -268,11 +269,6 @@ class VueAdmin(QtWidgets.QWidget):
         layout_colonnes.addWidget(self.spinTableauBordColonnes)
         layout_colonnes.addWidget(label_colonnes)
         
-        self.curseurTableauBordColonnes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableau_de_bord)
-        self.curseurTableauBordColonnes.setRange(0, 50)
-        self.curseurTableauBordColonnes.setValue(35)
-        self.curseurTableauBordColonnes.setStyleSheet("margin-bottom: 40px; max-width: 400px;")
-        
         # Contrôles pour les lignes
         layout_lignes = QtWidgets.QHBoxLayout()
         self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableau_de_bord)
@@ -283,11 +279,6 @@ class VueAdmin(QtWidgets.QWidget):
         
         layout_lignes.addWidget(self.spinTableauBordLignes)
         layout_lignes.addWidget(label_lignes)
-        
-        self.curseurTableauBordLignes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableau_de_bord)
-        self.curseurTableauBordLignes.setRange(0, 60)
-        self.curseurTableauBordLignes.setValue(52)
-        self.curseurTableauBordLignes.setStyleSheet("margin-bottom: 40px; max-width: 400px;")
         
         # Boutons d'action
         layout_boutons = QtWidgets.QHBoxLayout()
@@ -310,11 +301,9 @@ class VueAdmin(QtWidgets.QWidget):
         # Ajout des layout au tableau de bord
         layout_tableau_bord.addWidget(self.label_tableau_bord)
         layout_tableau_bord.addLayout(layout_colonnes)
-        layout_tableau_bord.addWidget(self.curseurTableauBordColonnes)
         layout_tableau_bord.addLayout(layout_lignes)
-        layout_tableau_bord.addWidget(self.curseurTableauBordLignes)
         layout_tableau_bord.addLayout(layout_boutons)
-    
+            
     def create_partie_droite(self):
         """Crée la partie droite avec la grille et l'image du magazin"""
         self.partie_droite = QtWidgets.QWidget(self)
@@ -391,7 +380,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.cellules_grille.clear()
         
         model = MagasinModel()
-        cases_colorees = model.analyser_image()
+        cases_colorees = model.analyser_image(rows, cols)
         self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
         self.graphe.afficher_grille(self.labels_grille)
         
@@ -435,14 +424,6 @@ class VueAdmin(QtWidgets.QWidget):
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
-        # Synchronisation spin/slider
-        self.spinTableauBordColonnes.valueChanged.connect(self.curseurTableauBordColonnes.setValue)
-        self.curseurTableauBordColonnes.valueChanged.connect(self.spinTableauBordColonnes.setValue)
-        self.spinTableauBordLignes.valueChanged.connect(self.curseurTableauBordLignes.setValue)
-        self.curseurTableauBordLignes.valueChanged.connect(self.spinTableauBordLignes.setValue)
-        
-        
-        # Émission des signaux vers le contrôleur
         self.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
         self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
@@ -513,6 +494,10 @@ class VueAdmin(QtWidgets.QWidget):
     
     def mettre_a_jour_grille(self, rows, cols):
         """Met à jour la grille avec de nouvelles dimensions"""
+        if rows is not None:
+            self.rows = rows
+        if cols is not None:
+            self.cols = cols
         self.create_grille(rows, cols)
     
     def effacer_grille(self):

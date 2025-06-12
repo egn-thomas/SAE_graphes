@@ -25,6 +25,8 @@ class MagasinController(QObject):
         self.vue.placer_produit.connect(self.placer_produit)
         self.vue.cellule_cliquee.connect(self.cellule_cliquee)
         self.vue.recherche_changee.connect(self.filtrer_produits)
+        self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
+        self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -32,6 +34,18 @@ class MagasinController(QObject):
             self.afficher_categories()
         else:
             print("Erreur lors du chargement des produits")
+    
+    def changer_colonnes(self, valeur):
+        print(f"Colonnes modifiées : {valeur}")
+        self.model.nb_colonnes = valeur
+        self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
+        self.model.initialiser_graphe()
+
+    def changer_lignes(self, valeur):
+        print(f"Lignes modifiées : {valeur}")
+        self.model.nb_lignes = valeur
+        self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
+        self.model.initialiser_graphe()
 
     def filtrer_produits(self, texte_recherche):
         """Filtre les produits selon le texte de recherche dans toutes les catégories"""
