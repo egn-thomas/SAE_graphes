@@ -8,23 +8,27 @@ class PageConnexion(QDialog):
 
         layout = QVBoxLayout()
 
-        self.label = QLabel("Mot de passe :")
-        self.mot_de_passe = QLineEdit()
-        self.mot_de_passe.setEchoMode(QLineEdit.EchoMode.Password)
+        self.label = QLabel("Identifiant :")
+        self.identifiant_input = QLineEdit()
 
         self.bouton_connexion = QPushButton("Se connecter")
-        self.bouton_connexion.clicked.connect(self.verifier_mot_de_passe)
+        self.bouton_connexion.clicked.connect(self.verifier_identifiant)
 
         layout.addWidget(self.label)
-        layout.addWidget(self.mot_de_passe)
+        layout.addWidget(self.identifiant_input)
         layout.addWidget(self.bouton_connexion)
 
         self.setLayout(layout)
-        self.acces_autorise = False
 
-    def verifier_mot_de_passe(self):
-        if self.mot_de_passe.text() == "admin123":  # <- mot de passe à changer
-            self.acces_autorise = True
+        self.role = None  # Peut être "admin" ou "client"
+
+    def verifier_identifiant(self):
+        identifiant = self.identifiant_input.text().strip().lower()
+        if identifiant == "admin":
+            self.role = "admin"
+            self.accept()
+        elif identifiant == "client":
+            self.role = "client"
             self.accept()
         else:
-            self.label.setText("Mot de passe incorrect")
+            self.label.setText("Identifiant inconnu")

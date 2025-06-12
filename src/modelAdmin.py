@@ -115,9 +115,6 @@ class MagasinModel:
                     if np.all(zone == 0):
                         cases_colorees.append((ligne, colonne))
 
-            # Suppression de la sauvegarde d’image
-            # cv2.imwrite(chemin_viz, cv2.cvtColor(viz_image, cv2.COLOR_RGB2BGR))
-
             return cases_colorees
 
         except Exception as e:
