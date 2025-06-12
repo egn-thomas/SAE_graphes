@@ -48,8 +48,8 @@ class VueAdmin(QtWidgets.QWidget):
     
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
-        if not os.path.exists("../disposition_magasin.csv"):
-            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+        if not os.path.exists("../sauvegarde_rapide"):
+            with open("../sauvegarde_rapide", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
@@ -120,30 +120,28 @@ class VueAdmin(QtWidgets.QWidget):
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
-        Met à jour le CSV '../disposition_magasin.csv' en modifiant la première colonne (Nom du projet)
+        Met à jour le CSV '../sauvegarde_rapide' en modifiant la première colonne (Nom du projet)
         pour toutes les lignes, et ce en temps réel à chaque modification.
         """
         try:
             # Si le fichier existe, on le lit
-            if os.path.exists("../disposition_magasin.csv"):
-                with open("../disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
+            if os.path.exists("../sauvegarde_rapide"):
+                with open("../sauvegarde_rapide", "r", newline='', encoding="utf-8") as csvfile:
                     reader = csv.reader(csvfile, delimiter=';')
                     lignes = list(reader)
 
 
             # Vérifier que le fichier contient au moins une ligne (l'en-tête)
             if len(lignes) > 0:
-                # Conserver l'en-tête intacte et mettre à jour la première colonne des données
                 en_tete = lignes[0]
                 nouvelles_lignes = [en_tete]
                 for ligne in lignes[1:]:
-                    # Mise à jour de la première colonne
                     if len(ligne) >= 1:
                         ligne[0] = nouveau_nom
                     nouvelles_lignes.append(ligne)
 
         # Réécriture du fichier CSV avec les nouvelles valeurs
-            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            with open("../sauvegarde_rapide", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerows(nouvelles_lignes)
 
@@ -156,12 +154,10 @@ class VueAdmin(QtWidgets.QWidget):
         if not articles:
             return
 
-        # Ferme la popup actuelle, s'il y en a une.
         if self.popup_actuelle:
             self.popup_actuelle.hide()
             self.popup_actuelle.deleteLater()
 
-        # Crée la nouvelle popup
         popup = self.creer_popup_articles(articles, ligne, colonne)
         popup.show()
         self.popup_actuelle = popup
@@ -180,6 +176,7 @@ class VueAdmin(QtWidgets.QWidget):
                 border: 1px solid #444;
                 border-radius: 5px;
             """)
+            popup.setMinimumHeight(100)
 
             layout = QtWidgets.QVBoxLayout(popup)
             layout.setContentsMargins(10, 10, 10, 10)
@@ -187,6 +184,7 @@ class VueAdmin(QtWidgets.QWidget):
 
             titre = QtWidgets.QLabel("Articles dans cette case :", popup)
             titre.setStyleSheet("font-weight: bold; font-size: 14px;")
+            titre.setMaximumHeight(50)
             layout.addWidget(titre)
 
             from collections import Counter
@@ -194,20 +192,35 @@ class VueAdmin(QtWidgets.QWidget):
 
             for produit, quantite in compte_articles.items():
                 texte = f"{produit} x{quantite}" if quantite > 1 else str(produit)
-                bouton = QtWidgets.QPushButton(texte, popup)
-                bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-                bouton.setStyleSheet("padding: 5px;")
-                
-                bouton.clicked.connect(lambda _, p=produit: self.bouton_popup_signal.emit(ligne, colonne, p))
-                layout.addWidget(bouton)
+                bouton_popup = QtWidgets.QPushButton(texte, popup)
+                bouton_popup.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+                bouton_popup.setStyleSheet("padding: 5px;")
+
+                def create_slot(bouton, produit=produit):
+                    def slot():
+                        self.bouton_popup_signal.emit(ligne, colonne, produit)
+                        layout.removeWidget(bouton)
+                        bouton.deleteLater()
+
+                        if layout.count() <= 1:
+                            popup.close()
+                    return slot
+
+                bouton_popup.clicked.connect(create_slot(bouton_popup))
+                layout.addWidget(bouton_popup)
 
             popup.adjustSize()
             screen = QtWidgets.QApplication.primaryScreen().geometry()
             popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
             return popup
+
         except Exception as e:
             print("Erreur dans creer_popup_articles :", e)
             return None
+    
+    def debug_emit(self, l, c, p):
+        print(f"[DEBUG VUE] Suppression demandée : {p} à ({l}, {c})")
+        self.bouton_popup_signal.emit(l, c, p)
 
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
@@ -453,13 +466,13 @@ class VueAdmin(QtWidgets.QWidget):
             
     def effacer_projet(self):
         """
-        Réinitialise le fichier '../disposition_magasin.csv', vide le contenu
+        Réinitialise le fichier '../sauvegarde_rapide', vide le contenu
         de toutes les cellules de la grille, efface le nom du projet dans le widget
         et supprime la popup active,
         """
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
-            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            with open("../sauvegarde_rapide", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
             print("Fichier CSV réinitialisé avec succès.")
@@ -515,6 +528,14 @@ class VueAdmin(QtWidgets.QWidget):
           
             print(f"[ERREUR] lors du clic sur le bouton Sauvegarder: {e}")
         
+    def supprimer_article_cellule(self, ligne, colonne, produit):
+        """Supprime un article d'une cellule DropArea spécifique"""
+        for drop_area in self.labels_grille.findChildren(DropArea):
+            if drop_area.ligne == ligne and drop_area.colonne == colonne:
+                if produit in drop_area.articles:
+                    drop_area.articles.remove(produit)
+            drop_area.mettre_a_jour_apparence()
+
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
         self.clear_layout(self.layout_articles_box)

@@ -7,6 +7,7 @@ class DropArea(QLabel):
     placer_produit = pyqtSignal(int, int, str)
     cellule_cliquee = pyqtSignal(int, int)
     parent = None
+    
     def __init__(self, parent, est_rayon):
         super().__init__(parent)
         self.est_rayon = est_rayon
@@ -114,7 +115,7 @@ class DropArea(QLabel):
             coord_formatee = f"{x}{y}"
 
             import os
-            file_path = "disposition_magasin.csv"
+            file_path = "../sauvegarde_rapide"
             header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
             # Vérifier si le fichier existe et déterminer s'il est vide
@@ -132,4 +133,9 @@ class DropArea(QLabel):
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
             
-        
+    def mettre_a_jour_apparence(self):
+        if not hasattr(self, "articles") or not self.articles:
+            self.setStyleSheet(self.default_style)
+            self.setText(None)
+        else:
+            self.setStyleSheet(self.filled_style)

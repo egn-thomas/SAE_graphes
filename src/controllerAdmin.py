@@ -1,10 +1,6 @@
 from PyQt6.QtCore import QObject
 from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
-from cellule import Cellule
-from graphe import Graphe
-from login import PageConnexion
-import time
 
 
 class MagasinController(QObject):
@@ -35,7 +31,7 @@ class MagasinController(QObject):
         self.vue.recherche_changee.connect(self.filtrer_produits)
         self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
         self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
-        self.vue.bouton_popup_signal.connect(self.model.effacer_element_grille)
+        self.vue.bouton_popup_signal.connect(self.supprimer_article)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -44,6 +40,11 @@ class MagasinController(QObject):
         else:
             print("Erreur lors du chargement des produits")
     
+    def supprimer_article(self, ligne, colonne, produit):
+        print(f"[CONTROLLER] Suppression de {produit} à ({ligne}, {colonne}) demandée")
+        self.model.effacer_element_grille(ligne, colonne, produit)
+        self.vue.supprimer_article_cellule(ligne, colonne, produit)
+
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
