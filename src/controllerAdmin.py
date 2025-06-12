@@ -35,6 +35,7 @@ class MagasinController(QObject):
         self.vue.recherche_changee.connect(self.filtrer_produits)
         self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
         self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
+        self.vue.bouton_popup_signal.connect(self.model.effacer_element_grille)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""

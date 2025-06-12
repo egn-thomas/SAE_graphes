@@ -21,6 +21,7 @@ class VueAdmin(QtWidgets.QWidget):
     placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
     recherche_changee = QtCore.pyqtSignal(str)
     sauvegarder_signal = QtCore.pyqtSignal()
+    bouton_popup_signal = QtCore.pyqtSignal(int, int, str)
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -119,13 +120,13 @@ class VueAdmin(QtWidgets.QWidget):
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
-        Met à jour le CSV 'disposition_magasin.csv' en modifiant la première colonne (Nom du projet)
+        Met à jour le CSV '../disposition_magasin.csv' en modifiant la première colonne (Nom du projet)
         pour toutes les lignes, et ce en temps réel à chaque modification.
         """
         try:
             # Si le fichier existe, on le lit
-            if os.path.exists("disposition_magasin.csv"):
-                with open("disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
+            if os.path.exists("../disposition_magasin.csv"):
+                with open("../disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
                     reader = csv.reader(csvfile, delimiter=';')
                     lignes = list(reader)
 
@@ -142,7 +143,7 @@ class VueAdmin(QtWidgets.QWidget):
                     nouvelles_lignes.append(ligne)
 
         # Réécriture du fichier CSV avec les nouvelles valeurs
-            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerows(nouvelles_lignes)
 
@@ -161,18 +162,16 @@ class VueAdmin(QtWidgets.QWidget):
             self.popup_actuelle.deleteLater()
 
         # Crée la nouvelle popup
-        popup = self.creer_popup_articles(articles)
+        popup = self.creer_popup_articles(articles, ligne, colonne)
         popup.show()
         self.popup_actuelle = popup
 
-    def creer_popup_articles(self, articles):
+    def creer_popup_articles(self, articles, ligne, colonne):
         try:
-            # Vérification de base
             if not isinstance(articles, list):
                 print("Erreur : 'articles' n'est pas une liste")
                 return None
 
-            # Création de la popup
             popup = QtWidgets.QWidget(self)
             popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
             popup.setStyleSheet("""
@@ -190,15 +189,17 @@ class VueAdmin(QtWidgets.QWidget):
             titre.setStyleSheet("font-weight: bold; font-size: 14px;")
             layout.addWidget(titre)
 
-            # Utilisation de Counter pour grouper et compter les articles
             from collections import Counter
             compte_articles = Counter(articles)
 
             for produit, quantite in compte_articles.items():
                 texte = f"{produit} x{quantite}" if quantite > 1 else str(produit)
-                label = QtWidgets.QLabel(texte, popup)
-                label.setStyleSheet("padding: 5px;")
-                layout.addWidget(label)
+                bouton = QtWidgets.QPushButton(texte, popup)
+                bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+                bouton.setStyleSheet("padding: 5px;")
+                
+                bouton.clicked.connect(lambda _, p=produit: self.bouton_popup_signal.emit(ligne, colonne, p))
+                layout.addWidget(bouton)
 
             popup.adjustSize()
             screen = QtWidgets.QApplication.primaryScreen().geometry()
@@ -452,13 +453,13 @@ class VueAdmin(QtWidgets.QWidget):
             
     def effacer_projet(self):
         """
-        Réinitialise le fichier 'disposition_magasin.csv', vide le contenu
+        Réinitialise le fichier '../disposition_magasin.csv', vide le contenu
         de toutes les cellules de la grille, efface le nom du projet dans le widget
         et supprime la popup active,
         """
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
-            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
             print("Fichier CSV réinitialisé avec succès.")
@@ -499,26 +500,20 @@ class VueAdmin(QtWidgets.QWidget):
         Gère le clic sur une cellule : recherche la DropArea correspondante dans la grille.
         Si la cellule possède des articles, affiche une popup avec le contenu.
         """
-        # Parcourir toutes les DropArea dans la grille
         for drop_area in self.labels_grille.findChildren(DropArea):
             if drop_area.ligne == ligne and drop_area.colonne == colonne:
-                # S'il y a un contenu dans la cellule, afficher la popup
                 if drop_area.articles and len(drop_area.articles) > 0:
                     self.afficher_popup_articles(ligne, colonne, drop_area.articles)
                 break
     
     def on_bouton_sauvegarder_clicked(self):
-        """
-        Slot appelé lorsqu'on clique sur le bouton Sauvegarder.
-        Il émet le signal de sauvegarde
-        """
+        """Slot appelé lorsqu'on clique sur le bouton Sauvegarder."""
         try:
             self.sauvegarder_signal.emit()
             print("Signal de sauvegarde émis.")
         except Exception as e:
           
             print(f"[ERREUR] lors du clic sur le bouton Sauvegarder: {e}")
-        
         
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
@@ -579,7 +574,7 @@ class VueAdmin(QtWidgets.QWidget):
     def sauvegarder_tous_les_produits(self):
         """
         Parcourt toutes les cellules de la grille et enregistre d'un coup tout
-        les produits dans le fichier CSV "disposition_magasin_sauvegarde.csv".
+        les produits dans le fichier CSV "../disposition_magasin_sauvegarde.csv".
         
         Le CSV comporte 5 colonnes:
         - Nom du projet (récupéré depuis self.nom_magasin)
@@ -591,7 +586,7 @@ class VueAdmin(QtWidgets.QWidget):
         Cette méthode écrase l'ancien contenu,
         et réécrit la grille actuelle.
         """
-        file_path = "disposition_magasin_sauvegarde.csv"
+        file_path = "../disposition_magasin_sauvegarde.csv"
         header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
         # Récupérer le nom du projet depuis le widget

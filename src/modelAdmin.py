@@ -1,5 +1,6 @@
 import os
 import cv2
+import csv
 import numpy as np
 from graphe import Graphe
 import listeProduit as lp
@@ -27,6 +28,30 @@ class MagasinModel:
         """Initialise le graphe du magasin"""
         self.graphe = Graphe(self.nb_lignes, self.nb_colonnes, self.cases_rayon, self.parent)
         return self.graphe
+    
+    def effacer_element_grille(self, ligne, colonne, produit):
+        """Supprime un élément spécifique du CSV en fonction de la ligne, colonne et produit."""
+        lignes_conservees = []
+        with open("disposition_magasin.csv", "r", newline='', encoding="utf-8") as csvfile:
+            reader = csv.reader(csvfile, delimiter=';')
+            for lignecsv in reader:
+                # Conserver l'en-tête
+                if lignecsv == ["Nom du projet", "Nom du produit", "X", "Y", "Position"]:
+                    lignes_conservees.append(lignecsv)
+                    continue
+                
+                if (len(lignecsv) >= 5 and 
+                    lignecsv[1] == produit and 
+                    lignecsv[2] == str(colonne) and 
+                    lignecsv[3] == str(ligne)):
+                    continue
+                else:
+                    lignes_conservees.append(lignecsv)
+        
+        # Réécrire le fichier
+        with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+            writer = csv.writer(csvfile, delimiter=';')
+            writer.writerows(lignes_conservees)
 
     def ajouter_article(self, ligne, colonne, article):
         """Ajoute un article dans une cellule"""
