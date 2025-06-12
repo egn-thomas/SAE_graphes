@@ -1,11 +1,13 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtWidgets import QFileDialog
 from graphe import Graphe
 from droparea import DropArea
+from modelAdmin import MagasinModel
 import os
+import csv
 
-
-class VueAdmin(QtWidgets.QWidget):
+class VueClient(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
     
     # Signaux pour communiquer avec le contrôleur
@@ -20,7 +22,7 @@ class VueAdmin(QtWidgets.QWidget):
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
-        super(VueAdmin, self).__init__()
+        super(VueClient, self).__init__()
         self.setWindowTitle("Créateur de magazin Administrateur")
         self.setGeometry(200, 200, 1600, 1200)
         
@@ -378,7 +380,9 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.deleteLater()
         self.cellules_grille.clear()
         
-        self.graphe = Graphe(rows, cols, parent=self.labels_grille)
+        model = MagasinModel()
+        cases_colorees = model.analyser_image(rows, cols)
+        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
         self.graphe.afficher_grille(self.labels_grille)
         
         for (i, j), drop_area in self.graphe.cellules_graphiques.items():
