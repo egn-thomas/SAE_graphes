@@ -3,6 +3,7 @@ from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
 from cellule import Cellule
 from graphe import Graphe
+from login import PageConnexion
 import time
 
 
