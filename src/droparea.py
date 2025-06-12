@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtCore import pyqtSignal, Qt
 import csv
+import time
 
 class DropArea(QLabel):
     placer_produit = pyqtSignal(int, int, str)
@@ -49,9 +50,20 @@ class DropArea(QLabel):
     def dragEnterEvent(self, event):
         """Appelé quand un élément est glissé au-dessus"""
         if event.mimeData().hasText():
+            if not self.text():
+                if self.est_rayon == True:
+                    self.setStyleSheet(self.hover_style_rayon)
+                else:
+                    self.setStyleSheet(self.hover_style_couloir)
             event.acceptProposedAction()
         else:
             event.ignore()
+
+    def dragLeaveEvent(self, event):
+        """Appelé quand l'élément quitte la zone"""
+        if not self.text():
+            self.setStyleSheet(self.default_style)
+        super().dragLeaveEvent(event)
 
     def leaveEvent(self, event):
         """Appelé quand la souris quitte la zone"""
@@ -61,16 +73,19 @@ class DropArea(QLabel):
 
     def dropEvent(self, event):
         produit = event.mimeData().text()
-        self.setText(produit)
-        self.setStyleSheet(self.filled_style)
-        self.placer_produit.emit(self.ligne, self.colonne, produit)
+        if self.est_rayon == True:
+            self.setText(produit)
+            self.setStyleSheet(self.filled_style)
+            self.placer_produit.emit(self.ligne, self.colonne, produit)
 
-        if hasattr(self, 'articles') and isinstance(self.articles, list):
-            self.articles.append(produit)
+            if hasattr(self, 'articles') and isinstance(self.articles, list):
+                self.articles.append(produit)
+            else:
+                self.articles = [produit]
+            event.acceptProposedAction()
+            self.enregistrer_produit(produit)
         else:
-            self.articles = [produit]
-        event.acceptProposedAction()
-        self.enregistrer_produit(produit)
+            return
         
     def mousePressEvent(self, event):
         """Gère le clic sur la cellule uniquement si elle affiche un produit"""
