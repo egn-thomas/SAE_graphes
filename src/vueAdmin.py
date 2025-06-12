@@ -245,12 +245,6 @@ class VueAdmin(QtWidgets.QWidget):
         """Lorsque le texte change"""
         self.recherche_changee.emit(texte)
 
-    def filtrer_produits(self, produits, filtre):
-        """filtre les produits selon l'etat de la barre de recherche"""
-        if not filtre:
-            return produits
-        return [p for p in produits if filtre.lower() in p.lower()]
-    
     def create_tableau_bord(self):
         """Crée la section du tableau de bord"""
         self.tableau_de_bord = QtWidgets.QWidget(self.partie_gauche)
@@ -445,15 +439,6 @@ class VueAdmin(QtWidgets.QWidget):
         self.curseurTableauBordColonnes.valueChanged.connect(self.spinTableauBordColonnes.setValue)
         self.spinTableauBordLignes.valueChanged.connect(self.curseurTableauBordLignes.setValue)
         self.curseurTableauBordLignes.valueChanged.connect(self.spinTableauBordLignes.setValue)
-        
-        
-        # Émission des signaux vers le contrôleur
-        self.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
-        self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
-        self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
-        self.bouton_effacer.clicked.connect(self.effacer_projet)
-        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
-        self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
 
     def on_dimensions_changees(self):
         """Émet le signal de changement de dimensions"""
