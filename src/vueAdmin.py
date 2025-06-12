@@ -47,11 +47,11 @@ class VueAdmin(QtWidgets.QWidget):
     
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
-    if not os.path.exists("disposition_magasin.csv"):
-        print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
-        with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
-            writer = csv.writer(csvfile, delimiter=';')
-            writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+        if not os.path.exists("disposition_magasin.csv"):
+            print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
+            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
     def charger_csv_automatiquement(self):
         """

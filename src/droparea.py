@@ -71,8 +71,10 @@ class DropArea(QLabel):
         self.setText(produit)
         self.setStyleSheet(self.filled_style)
         self.placer_produit.emit(self.ligne, self.colonne, produit)
-        # Remplacer l'ancien contenu par le nouveau
-        self.articles = [produit]
+        if hasattr(self, 'articles') and isinstance(self.articles, list):
+            self.articles.append(produit)
+        else:
+            self.articles = [produit]
         event.acceptProposedAction()
         self.enregistrer_produit(produit)
         

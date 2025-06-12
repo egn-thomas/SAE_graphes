@@ -75,3 +75,5 @@ class MagasinController(QObject):
             produits = [p for p in produits if texte_recherche.lower() in p.lower()]
         self.vue.afficher_produits(produits)
         print(f"[DEBUG] Affichage des produits de la catégorie : {categorie}")
+
+    
