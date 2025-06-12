@@ -1,5 +1,3 @@
-Nom du projet;Nom du produit;X;Y;Position
-alpha;Café soluble;8;4;84
-alpha;Café en grains;9;4;94
-alpha;Café soluble x2;9;4;94
-alpha;Barres chocolatées;12;4;124
+Nom du projet;Nom du produit;X;Y;Position;Colonnes;Lignes
+;Encornet;10;27;1027;40;52
+;Écrevisses;12;27;1227;40;52
