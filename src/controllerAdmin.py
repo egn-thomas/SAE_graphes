@@ -3,6 +3,7 @@ from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
 from cellule import Cellule
 from graphe import Graphe
+from login import PageConnexion
 import time
 
 
@@ -11,6 +12,7 @@ class MagasinController(QObject):
     
     def __init__(self):
         super().__init__()
+        self.login = PageConnexion()
         self.vue = VueAdmin()
         self.model = MagasinModel()
         self.model.parent = self.vue
