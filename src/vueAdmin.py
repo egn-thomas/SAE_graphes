@@ -1,5 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtWidgets import QFileDialog
 from graphe import Graphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
@@ -37,78 +38,69 @@ class VueAdmin(QtWidgets.QWidget):
          # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
         # Charger la sauvegarde existante (si présente) pour remplir le magasin.
-        self.charger_csv_automatiquement()
+        self.charger_csv()
         
         self.popup_actuelle = None
         
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
-    if not os.path.exists("disposition_magasin.csv"):
-        print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
-        with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
-            writer = csv.writer(csvfile, delimiter=';')
-            writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+        if not os.path.exists("../disposition_magasin.csv"):
+            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
-    def charger_csv_automatiquement(self):
+    def charger_csv(self):
         """
-        Lit le fichier CSV "disposition_magasin.csv" et met à jour automatiquement
-        les cellules de la grille (DropArea) en fonction des coordonnées.
-        
-        Le fichier CSV doit comporter 5 colonnes, dans cet ordre :
-        - Nom du projet
-        - Nom du produit
-        - Colonne (numérique, en 1-base)
-        - Ligne (numérique, en 1-base)
-        - Position (optionnel : par exemple "A1")
-        
-        Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0‑base,
-        recherche la DropArea correspondante, et met à jour son texte, son style (background)
-        et son contenu.
+        Ouvre une boîte de dialogue pour permettre à l'utilisateur de choisir un fichier CSV.
+        Met à jour les DropAreas en fonction du contenu du fichier sélectionné.
         """
+
+        # Ouvrir une boîte de dialogue pour choisir un fichier
+        chemin_fichier, _ = QFileDialog.getOpenFileName(
+            self, "Ouvrir un fichier CSV", "", "Fichiers CSV (*.csv)"
+        )
+
+        if not chemin_fichier:
+            print("Chargement annulé par l'utilisateur.")
+            return  # Aucun fichier sélectionné
 
         try:
-            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+            with open(chemin_fichier, "r", encoding="utf-8") as csvfile:
                 reader = csv.reader(csvfile, delimiter=";")
                 header = next(reader, None)  # Ignorer l'en-tête
                 project_name = None
-                
+
                 for row in reader:
                     if len(row) < 5:
-                        continue  # Ignorer les lignes incomplètes
+                        continue
                     nom_projet, produit, col_str, ligne_str, position = row
 
-                    # Conserver le nom du projet depuis la première ligne valide
                     if project_name is None:
                         project_name = nom_projet
 
                     try:
-                        # Convertir les coordonnées en indices 0‑base
                         col_index = int(col_str)
                         row_index = int(ligne_str)
                     except ValueError:
-                        # Si la conversion échoue, on passe à la prochaine ligne
                         continue
 
-                    # Parcourir toutes les DropArea pour mettre à jour la bonne cellule
                     for drop_area in self.labels_grille.findChildren(DropArea):
-                        
                         if drop_area.colonne == col_index and drop_area.ligne == row_index:
                             if produit.strip():
                                 drop_area.setText(produit)
                                 drop_area.setStyleSheet(drop_area.filled_style)
-                                drop_area.articles = [produit]  # Remplacer complètement l'ancien contenu
+                                drop_area.articles = [produit]
                             else:
                                 drop_area.setText("")
                                 drop_area.setStyleSheet(drop_area.default_style)
                                 drop_area.articles = []
-                            break  # Une fois la cellule trouvée et mise à jour, on passe à la ligne suivante
+                            break
+
                 if project_name:
                     self.nom_magasin.setText(project_name)
-            print("Chargement automatique terminé avec succès.")
-        except FileNotFoundError:
-            print("Le fichier 'disposition_magasin.csv' est introuvable.")
+            print(f"Chargement terminé : {chemin_fichier}")
         except Exception as e:
-            print(f"[ERREUR] lors du chargement automatique : {e}")
+            print(f"[ERREUR] lors du chargement : {e}")
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
@@ -424,16 +416,10 @@ class VueAdmin(QtWidgets.QWidget):
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
-        self.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
-        self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
         self.bouton_effacer.clicked.connect(self.effacer_projet)
         self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
 
-    def on_dimensions_changees(self):
-        """Émet le signal de changement de dimensions"""
-        self.dimensions_changees.emit(self.spinTableauBordColonnes.value(), self.spinTableauBordLignes.value())
-    
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
         self.placer_produit.emit(ligne, colonne, produit)

@@ -13,7 +13,7 @@ class MagasinModel:
         self.seuil_blanc = 180
         self.nb_colonnes = 35
         self.nb_lignes = 56
-        self.cases_rayon = self.analyser_image()
+        self.cases_rayon = self.analyser_image(self.nb_colonnes, self.nb_lignes)
 
         self.graphe = None
         self.categories = []

@@ -3,6 +3,7 @@ from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
 from cellule import Cellule
 from graphe import Graphe
+import time
 
 
 class MagasinController(QObject):
@@ -38,12 +39,14 @@ class MagasinController(QObject):
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
+        time.sleep(1)
         self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
         self.model.initialiser_graphe()
 
     def changer_lignes(self, valeur):
         print(f"Lignes modifiées : {valeur}")
         self.model.nb_lignes = valeur
+        time.sleep(1)
         self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
 
