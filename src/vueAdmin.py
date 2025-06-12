@@ -6,7 +6,7 @@ from droparea import DropArea
 from modelAdmin import MagasinModel
 import os
 import csv
-
+from collections import Counter
 
 class VueAdmin(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
@@ -90,7 +90,7 @@ class VueAdmin(QtWidgets.QWidget):
                         project_name = nom_projet
 
                     try:
-                        col_index = int(col_str)
+                        col_index = int(col_str)   # On suppose ici que les valeurs sont déjà en 0-base
                         row_index = int(ligne_str)
                     except ValueError:
                         continue
@@ -98,18 +98,22 @@ class VueAdmin(QtWidgets.QWidget):
                     for drop_area in self.labels_grille.findChildren(DropArea):
                         if drop_area.colonne == col_index and drop_area.ligne == row_index:
                             if produit.strip():
-                                drop_area.setText(produit)
+                                # Si des produits sont déjà présents, on ajoute le nouveau
+                                if hasattr(drop_area, "articles") and drop_area.articles:
+                                    drop_area.articles.append(produit)
+                                else:
+                                    drop_area.articles = [produit]
+                                # Met à jour le texte affiché en joignant les produits par une virgule
+                                drop_area.setText(", ".join(drop_area.articles))
                                 drop_area.setStyleSheet(drop_area.filled_style)
-                                drop_area.articles = [produit]
                             else:
                                 drop_area.setText("")
                                 drop_area.setStyleSheet(drop_area.default_style)
                                 drop_area.articles = []
                             break
-
                 if project_name:
                     self.nom_magasin.setText(project_name)
-            print(f"Chargement terminé : {chemin_fichier}")
+                print(f"Chargement terminé : {chemin_fichier}")
         except Exception as e:
             print(f"[ERREUR] lors du chargement : {e}")
 
@@ -162,35 +166,47 @@ class VueAdmin(QtWidgets.QWidget):
         self.popup_actuelle = popup
 
     def creer_popup_articles(self, articles):
-        """Crée une popup affichant la liste des articles."""
-        popup = QtWidgets.QWidget(self)
-        popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
-        popup.setStyleSheet("""
-            background-color: #2c2c2c;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 5px;
-        """)
+        try:
+            # Vérification de base
+            if not isinstance(articles, list):
+                print("Erreur : 'articles' n'est pas une liste")
+                return None
 
-        layout = QtWidgets.QVBoxLayout(popup)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(5)
+            # Création de la popup
+            popup = QtWidgets.QWidget(self)
+            popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
+            popup.setStyleSheet("""
+                background-color: #2c2c2c;
+                color: white;
+                border: 1px solid #444;
+                border-radius: 5px;
+            """)
 
-        titre = QtWidgets.QLabel("Articles dans cette case:", popup)
-        titre.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(titre)
+            layout = QtWidgets.QVBoxLayout(popup)
+            layout.setContentsMargins(10, 10, 10, 10)
+            layout.setSpacing(5)
 
-        for article in articles:
-            label = QtWidgets.QLabel(article, popup)
-            label.setStyleSheet("padding: 5px;")
-            layout.addWidget(label)
+            titre = QtWidgets.QLabel("Articles dans cette case :", popup)
+            titre.setStyleSheet("font-weight: bold; font-size: 14px;")
+            layout.addWidget(titre)
 
-        popup.adjustSize()
-        # Positionne la popup au centre de l'écran
-        screen = QtWidgets.QApplication.primaryScreen().geometry()
-        popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
+            # Utilisation de Counter pour grouper et compter les articles
+            from collections import Counter
+            compte_articles = Counter(articles)
 
-        return popup
+            for produit, quantite in compte_articles.items():
+                texte = f"{produit} x{quantite}" if quantite > 1 else str(produit)
+                label = QtWidgets.QLabel(texte, popup)
+                label.setStyleSheet("padding: 5px;")
+                layout.addWidget(label)
+
+            popup.adjustSize()
+            screen = QtWidgets.QApplication.primaryScreen().geometry()
+            popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
+            return popup
+        except Exception as e:
+            print("Erreur dans creer_popup_articles :", e)
+            return None
 
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
@@ -578,26 +594,36 @@ class VueAdmin(QtWidgets.QWidget):
         file_path = "disposition_magasin_sauvegarde.csv"
         header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
-        # Récupération du nom du projet
+        # Récupérer le nom du projet depuis le widget
         nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
 
         try:
-            # Ouvre le fichier en mode écriture pour réécrire entièrement le CSV
             with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(header)
 
                 # Parcourir toutes les cellules de la grille
                 for drop_area in self.labels_grille.findChildren(DropArea):
-                    produit = drop_area.text().strip()  # Récupère le texte affiché dans la cellule
-                    if produit:
-                        # On suppose que drop_area.colonne et drop_area.ligne contiennent des valeurs numériques en 0-base.
-                        # Si vous travaillez en 1-base, convertissez-les ici ou ajustez la logique.
-                        x = drop_area.colonne  
-                        y = drop_area.ligne
-                        y
+                    # Si l'attribut 'articles' existe et contient des produits, on les compte
+                    if hasattr(drop_area, "articles") and drop_area.articles:
+                        produit_counts = Counter(drop_area.articles)
+                        
+                        x = drop_area.colonne  # Coordonnée horizontale (0-base)
+                        y = drop_area.ligne    # Coordonnée verticale (0-base)
                         coord_formatee = f"{x}{y}"
-                        writer.writerow([nom_projet, produit, x, y, coord_formatee])
+                        
+                        # Pour chaque produit dans cette cellule
+                        for prod, quantite in produit_counts.items():
+                            produit_str = f"{prod} x{quantite}" if quantite > 1 else prod
+                            writer.writerow([nom_projet, produit_str, x, y, coord_formatee])
+                    else:
+                        # Si aucune liste n'est associée, on vérifie le texte affiché de la cellule.
+                        produit = drop_area.text().strip()
+                        if produit:
+                            x = drop_area.colonne
+                            y = drop_area.ligne
+                            coord_formatee = f"{x}{y}"
+                            writer.writerow([nom_projet, produit, x, y, coord_formatee])
             print("Tous les produits ont été sauvegardés avec succès dans le fichier de sauvegarde.")
         except Exception as e:
             print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
