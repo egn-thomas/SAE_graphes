@@ -11,9 +11,7 @@ class DropArea(QLabel):
         self.est_rayon = est_rayon
         self.setAcceptDrops(True)
         
-        # CORRECTION : Initialiser est_rayon par défaut
         self.est_rayon = False
-        print(f"[DEBUG droparea.py] DropArea créée avec est_rayon = {self.est_rayon}")
         
         self.default_style = """
             background-color: transparent;
@@ -41,16 +39,11 @@ class DropArea(QLabel):
 
     def enterEvent(self, event):
         """Appelé quand la souris entre dans la zone"""
-        print(f"[DEBUG droparea.py] enterEvent sur ({self.ligne},{self.colonne}) - est_rayon = {self.est_rayon}, text = '{self.text()}'")
         if not self.text():
             if self.est_rayon == True:
-                print(f"[DEBUG droparea.py] Application style RAYON (vert)")
                 self.setStyleSheet(self.hover_style_rayon)
-            elif self.est_rayon == False:
-                print(f"[DEBUG droparea.py] Application style COULOIR (rouge)")
-                self.setStyleSheet(self.hover_style_couloir)
             else:
-                print(f"[DEBUG droparea.py] est_rayon vaut none")
+                self.setStyleSheet(self.hover_style_couloir)
         super().enterEvent(event)
 
     def dragEnterEvent(self, event):
@@ -71,6 +64,7 @@ class DropArea(QLabel):
         self.setText(produit)
         self.setStyleSheet(self.filled_style)
         self.placer_produit.emit(self.ligne, self.colonne, produit)
+
         if hasattr(self, 'articles') and isinstance(self.articles, list):
             self.articles.append(produit)
         else:
@@ -120,7 +114,6 @@ class DropArea(QLabel):
                 # Écriture de la ligne contenant le nom du projet et le produit
                 writer.writerow([nom_projet, produit, x, y, coord_formatee])
 
-            print(f"Produit {produit} enregistré dans le projet {nom_projet} en ({x}, {y}).")
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
             

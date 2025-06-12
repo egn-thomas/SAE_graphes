@@ -1,5 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtWidgets import QFileDialog
 from graphe import Graphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
@@ -14,7 +15,8 @@ class VueAdmin(QtWidgets.QWidget):
     categorie_cliquee = QtCore.pyqtSignal(str)
     retour_categories = QtCore.pyqtSignal()
     cellule_cliquee = QtCore.pyqtSignal(int, int)
-    dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
+    nombre_ligne_changee = QtCore.pyqtSignal(int)
+    nombre_colonne_changee = QtCore.pyqtSignal(int)
     nom_magasin_change = QtCore.pyqtSignal(str)
     placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
     recherche_changee = QtCore.pyqtSignal(str)
@@ -34,29 +36,26 @@ class VueAdmin(QtWidgets.QWidget):
         
         self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
+
         
         
         
          # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
-        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
-        self.charger_csv_automatiquement()
-        
         self.popup_actuelle = None
     
     
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
-        if not os.path.exists("disposition_magasin.csv"):
-            print(" Aucun fichier de sauvegarde trouvé, création d'un fichier vierge...")
-            with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
+        if not os.path.exists("../disposition_magasin.csv"):
+            with open("../disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
-    def charger_csv_automatiquement(self):
+    def charger_csv(self):
         """
-        Lit le fichier CSV "disposition_magasin.csv" et met à jour automatiquement
-        les cellules de la grille (DropArea) en fonction des coordonnées.
+        Ouvre une boîte de dialogue pour permettre à l'utilisateur de choisir un fichier CSV.
+        Met à jour les DropAreas en fonction du contenu du fichier sélectionné.
         
         Le fichier CSV doit comporter 5 colonnes, dans cet ordre :
         - Nom du projet
@@ -70,49 +69,49 @@ class VueAdmin(QtWidgets.QWidget):
         et son contenu.
         """
 
+        chemin_fichier, _ = QFileDialog.getOpenFileName(
+            self, "Ouvrir un fichier CSV", "", "Fichiers CSV (*.csv)"
+        )
+
+        if not chemin_fichier:
+            return
         try:
-            with open("disposition_magasin.csv", "r", encoding="utf-8") as csvfile:
+            with open(chemin_fichier, "r", encoding="utf-8") as csvfile:
                 reader = csv.reader(csvfile, delimiter=";")
                 header = next(reader, None)  # Ignorer l'en-tête
                 project_name = None
-                
+
                 for row in reader:
                     if len(row) < 5:
-                        continue  # Ignorer les lignes incomplètes
+                        continue
                     nom_projet, produit, col_str, ligne_str, position = row
 
-                    # Conserver le nom du projet depuis la première ligne valide
                     if project_name is None:
                         project_name = nom_projet
 
                     try:
-                        # Convertir les coordonnées en indices 0‑base
                         col_index = int(col_str)
                         row_index = int(ligne_str)
                     except ValueError:
-                        # Si la conversion échoue, on passe à la prochaine ligne
                         continue
 
-                    # Parcourir toutes les DropArea pour mettre à jour la bonne cellule
                     for drop_area in self.labels_grille.findChildren(DropArea):
-                        
                         if drop_area.colonne == col_index and drop_area.ligne == row_index:
                             if produit.strip():
                                 drop_area.setText(produit)
                                 drop_area.setStyleSheet(drop_area.filled_style)
-                                drop_area.articles = [produit]  # Remplacer complètement l'ancien contenu
+                                drop_area.articles = [produit]
                             else:
                                 drop_area.setText("")
                                 drop_area.setStyleSheet(drop_area.default_style)
                                 drop_area.articles = []
-                            break  # Une fois la cellule trouvée et mise à jour, on passe à la ligne suivante
+                            break
+
                 if project_name:
                     self.nom_magasin.setText(project_name)
-            print("Chargement automatique terminé avec succès.")
-        except FileNotFoundError:
-            print("Le fichier 'disposition_magasin.csv' est introuvable.")
+            print(f"Chargement terminé : {chemin_fichier}")
         except Exception as e:
-            print(f"[ERREUR] lors du chargement automatique : {e}")
+            print(f"[ERREUR] lors du chargement : {e}")
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
@@ -273,11 +272,6 @@ class VueAdmin(QtWidgets.QWidget):
         layout_colonnes.addWidget(self.spinTableauBordColonnes)
         layout_colonnes.addWidget(label_colonnes)
         
-        self.curseurTableauBordColonnes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableau_de_bord)
-        self.curseurTableauBordColonnes.setRange(0, 50)
-        self.curseurTableauBordColonnes.setValue(35)
-        self.curseurTableauBordColonnes.setStyleSheet("margin-bottom: 40px; max-width: 400px;")
-        
         # Contrôles pour les lignes
         layout_lignes = QtWidgets.QHBoxLayout()
         self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableau_de_bord)
@@ -288,11 +282,6 @@ class VueAdmin(QtWidgets.QWidget):
         
         layout_lignes.addWidget(self.spinTableauBordLignes)
         layout_lignes.addWidget(label_lignes)
-        
-        self.curseurTableauBordLignes = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self.tableau_de_bord)
-        self.curseurTableauBordLignes.setRange(0, 60)
-        self.curseurTableauBordLignes.setValue(52)
-        self.curseurTableauBordLignes.setStyleSheet("margin-bottom: 40px; max-width: 400px;")
         
         # Boutons d'action
         layout_boutons = QtWidgets.QHBoxLayout()
@@ -315,11 +304,9 @@ class VueAdmin(QtWidgets.QWidget):
         # Ajout des layout au tableau de bord
         layout_tableau_bord.addWidget(self.label_tableau_bord)
         layout_tableau_bord.addLayout(layout_colonnes)
-        layout_tableau_bord.addWidget(self.curseurTableauBordColonnes)
         layout_tableau_bord.addLayout(layout_lignes)
-        layout_tableau_bord.addWidget(self.curseurTableauBordLignes)
         layout_tableau_bord.addLayout(layout_boutons)
-    
+            
     def create_partie_droite(self):
         """Crée la partie droite avec la grille et l'image du magazin"""
         self.partie_droite = QtWidgets.QWidget(self)
@@ -396,7 +383,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.cellules_grille.clear()
         
         model = MagasinModel()
-        cases_colorees = model.analyser_image()
+        cases_colorees = model.analyser_image(rows, cols)
         self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
         self.graphe.afficher_grille(self.labels_grille)
         
@@ -411,7 +398,6 @@ class VueAdmin(QtWidgets.QWidget):
         de toutes les cellules de la grille, efface le nom du projet dans le widget
         et supprime la popup active,
         """
-        import csv, os
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
             with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
@@ -440,25 +426,12 @@ class VueAdmin(QtWidgets.QWidget):
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
-        # Synchronisation spin/slider
-        self.spinTableauBordColonnes.valueChanged.connect(self.curseurTableauBordColonnes.setValue)
-        self.curseurTableauBordColonnes.valueChanged.connect(self.spinTableauBordColonnes.setValue)
-        self.spinTableauBordLignes.valueChanged.connect(self.curseurTableauBordLignes.setValue)
-        self.curseurTableauBordLignes.valueChanged.connect(self.spinTableauBordLignes.setValue)
-        
-        
-        # Émission des signaux vers le contrôleur
-        self.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
-        self.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
         self.bouton_effacer.clicked.connect(self.effacer_projet)
+        self.bouton_ouvrir.clicked.connect(self.charger_csv)
         self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
         self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
 
-    def on_dimensions_changees(self):
-        """Émet le signal de changement de dimensions"""
-        self.dimensions_changees.emit(self.spinTableauBordColonnes.value(), self.spinTableauBordLignes.value())
-    
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
         self.placer_produit.emit(ligne, colonne, produit)
@@ -532,6 +505,10 @@ class VueAdmin(QtWidgets.QWidget):
     
     def mettre_a_jour_grille(self, rows, cols):
         """Met à jour la grille avec de nouvelles dimensions"""
+        if rows is not None:
+            self.rows = rows
+        if cols is not None:
+            self.cols = cols
         self.create_grille(rows, cols)
     
     def effacer_grille(self):

@@ -11,13 +11,10 @@ class Graphe:
         self.nb_colonnes = nb_colonnes
         self.cases_colorees = cases_colorees
         self.parent = parent
-        print("Cases colorées reçues :", self.cases_colorees)
         self.initialiser_graphe()
 
     def initialiser_graphe(self):
         """Initialise la structure logique et graphique"""
-        print(f"[DEBUG graphe.py] Initialisation graphe avec cases_colorees: {self.cases_colorees}")
-        print(f"[DEBUG graphe.py] Nombre de cases colorées: {len(self.cases_colorees) if self.cases_colorees else 0}")
         
         for i in range(self.nb_lignes):
             for j in range(self.nb_colonnes):
@@ -25,7 +22,6 @@ class Graphe:
                     est_rayon = True
                 else:
                     est_rayon = False
-                print(f"[DEBUG graphe.py] Case ({i},{j}) - est_rayon = {est_rayon}")
                 cellule = Cellule(None, est_rayon)
                 cellule.set_position(i, j)
                 self.graphe[(i, j)] = cellule

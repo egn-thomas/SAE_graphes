@@ -13,7 +13,7 @@ class MagasinModel:
         self.seuil_blanc = 180
         self.nb_colonnes = 35
         self.nb_lignes = 56
-        self.cases_rayon = self.analyser_image()
+        self.cases_rayon = self.analyser_image(self.nb_colonnes, self.nb_lignes)
 
         self.graphe = None
         self.categories = []
@@ -66,7 +66,7 @@ class MagasinModel:
                     self.produits_par_categorie[cat].append(valeur)
 
 
-    def analyser_image(self):
+    def analyser_image(self, rows, cols):
         """Analyse l'image du plan pour détecter les rayons selon la couleur moyenne"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
         chemin_image = os.path.join(script_dir, "..", "plan_magasin.jpg")
@@ -85,12 +85,12 @@ class MagasinModel:
             # Image de visualisation : blanc par défaut
             viz_image = np.full((hauteur, largeur, 3), 255, dtype=np.uint8)
 
-            largeur_case = largeur // self.nb_colonnes
-            hauteur_case = hauteur // self.nb_lignes
+            largeur_case = largeur // cols
+            hauteur_case = hauteur // rows
 
             # Première passe : remplit viz_image avec les couleurs moyennes
-            for ligne in range(self.nb_lignes):
-                for colonne in range(self.nb_colonnes):
+            for ligne in range(rows):
+                for colonne in range(cols):
                     x_debut = colonne * largeur_case
                     y_debut = ligne * hauteur_case
                     x_fin = min(x_debut + largeur_case, largeur)
@@ -102,25 +102,21 @@ class MagasinModel:
                     if np.any(moyenne < self.seuil_blanc):
                         viz_image[y_debut:y_fin, x_debut:x_fin] = (0, 0, 0)
 
-            # Deuxième passe : détecte les cases qui ont été coloriées en noir
+            # Deuxième passe : détecte les cases noires
             cases_colorees = []
-            for ligne in range(self.nb_lignes):
-                for colonne in range(self.nb_colonnes):
+            for ligne in range(rows):
+                for colonne in range(cols):
                     x_debut = colonne * largeur_case
                     y_debut = ligne * hauteur_case
                     x_fin = min(x_debut + largeur_case, largeur)
                     y_fin = min(y_debut + hauteur_case, hauteur)
 
                     zone = viz_image[y_debut:y_fin, x_debut:x_fin]
-
-                    # Vérifie si la zone est entièrement noire (0, 0, 0)
                     if np.all(zone == 0):
                         cases_colorees.append((ligne, colonne))
 
-            # Sauvegarde de l’image de visualisation
-            chemin_viz = os.path.join(script_dir, "..", "visualization.jpg")
-            cv2.imwrite(chemin_viz, cv2.cvtColor(viz_image, cv2.COLOR_RGB2BGR))
-            print(f"Nombre final de cases colorées (non blanches pures) : {len(cases_colorees)}")
+            # Suppression de la sauvegarde d’image
+            # cv2.imwrite(chemin_viz, cv2.cvtColor(viz_image, cv2.COLOR_RGB2BGR))
 
             return cases_colorees
 
