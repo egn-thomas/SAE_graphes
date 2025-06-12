@@ -4,6 +4,7 @@ from vueAdmin import VueAdmin
 from cellule import Cellule
 from graphe import Graphe
 from login import PageConnexion
+from PyQt6 import QtCore
 import time
 
 
@@ -25,16 +26,14 @@ class MagasinController(QObject):
         self.vue.nom_magasin.textChanged.connect(self.mise_a_jour_nom_magasin)
         
         self.vue.recherche_articles.textChanged.connect(self.filtrer_produits)
-        self.vue.spinTableauBordColonnes.valueChanged.connect(self.on_dimensions_changees)
-        self.vue.spinTableauBordLignes.valueChanged.connect(self.on_dimensions_changees)
         
         self.vue.categorie_cliquee.connect(self.afficher_produits_categorie)
         self.vue.retour_categories.connect(self.afficher_categories)
         self.vue.placer_produit.connect(self.placer_produit)
         self.vue.cellule_cliquee.connect(self.cellule_cliquee)
         self.vue.recherche_changee.connect(self.filtrer_produits)
-        self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
-        self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
+        self.vue.spinTableauBordColonnes.valueChanged.connect(self.timer_colonnes)
+        self.vue.spinTableauBordLignes.valueChanged.connect(self.timer_lignes)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -42,12 +41,32 @@ class MagasinController(QObject):
             self.afficher_categories()
         else:
             print("Erreur lors du chargement des produits")
-    
+
+    def timer_colonnes(self):
+        valeur_initiale = self.vue.spinTableauBordColonnes.value()
+
+        def verifier_stabilite():
+            valeur_actuelle = self.vue.spinTableauBordColonnes.value()
+            if valeur_actuelle == valeur_initiale:
+                self.changer_colonnes(valeur_actuelle)
+
+        QtCore.QTimer.singleShot(1000, verifier_stabilite)
+
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
         self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
         self.model.initialiser_graphe()
+
+    def timer_lignes(self):
+        valeur_initiale = self.vue.spinTableauBordLignes.value()
+
+        def verifier_stabilite():
+            valeur_actuelle = self.vue.spinTableauBordLignes.value()
+            if valeur_actuelle == valeur_initiale:
+                self.changer_lignes(valeur_actuelle)
+
+        QtCore.QTimer.singleShot(1000, verifier_stabilite)
 
     def changer_lignes(self, valeur):
         print(f"Lignes modifiées : {valeur}")
@@ -106,6 +125,3 @@ class MagasinController(QObject):
     def effacer_projet(self):
         """Gère l'effacement complet du projet"""
         self.vue.effacer_projet()
-    
-    def on_dimensions_changees(self):
-        return
