@@ -88,5 +88,20 @@ class MagasinController(QObject):
             produits = [p for p in produits if texte_recherche.lower() in p.lower()]
         self.vue.afficher_produits(produits)
         print(f"[DEBUG] Affichage des produits de la catégorie : {categorie}")
+<<<<<<< HEAD
 
     
+=======
+    
+    def mise_a_jour_nom_magasin(self, nouveau_nom):
+        """Met à jour le nom du magasin dans le modèle et le fichier CSV"""
+        self.model.nom_magasin = nouveau_nom
+        self.vue.maj_nom_projet_csv(nouveau_nom)
+    
+    def effacer_projet(self):
+        """Gère l'effacement complet du projet"""
+        self.vue.effacer_projet()
+    
+    def on_dimensions_changees(self):
+        return
+>>>>>>> 949c19eb912d19e07d804ed91a4f76cfcfcda202
