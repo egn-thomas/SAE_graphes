@@ -20,7 +20,7 @@ class PageConnexion(QDialog):
 
         self.setLayout(layout)
 
-        self.role = None  # Peut être "admin" ou "client"
+        self.role = None
 
     def verifier_identifiant(self):
         identifiant = self.identifiant_input.text().strip().lower()

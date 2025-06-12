@@ -12,7 +12,6 @@ class MagasinController(QObject):
     
     def __init__(self):
         super().__init__()
-        self.login = PageConnexion()
         self.vue = VueAdmin()
         self.model = MagasinModel()
         self.model.parent = self.vue
