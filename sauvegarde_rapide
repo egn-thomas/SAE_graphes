@@ -1,0 +1,178 @@
+Nom du projet;Nom du produit;X;Y;Position
+;Ail;30;17;3017
+;Artichaut;29;17;2917
+;Asperges;28;17;2817
+;Aubergine;27;17;2717
+;Avocat;26;17;2617
+;Betterave;25;17;2517
+;Blette;24;17;2417
+;Brocolis;23;17;2317
+;Carotte;22;17;2217
+;Céleri;21;17;2117
+;Champignons;20;17;2017
+;Champignons chinois;19;17;1917
+;Chou;30;15;3015
+;Chou de Bruxelles;29;15;2915
+;Choucroute;28;15;2815
+;Chou-fleur;27;15;2715
+;Chou-rouge;26;15;2615
+;Ciboulette;19;11;1911
+;Citrouille;20;11;2011
+;Coeur de palmier;21;11;2111
+;Courge;22;11;2211
+;Courgette;23;11;2311
+;Cresson;24;11;2411
+;Échalote;25;11;2511
+;Endive;26;11;2611
+;Épinards;27;11;2711
+;Fenouil;28;11;2811
+;Flageolets;29;11;2911
+;Germe de soja;30;11;3011
+;Gingembre;22;15;2215
+;Haricot;21;15;2115
+;Lentilles;20;15;2015
+;Mâche;20;14;2014
+;Macédoine;21;14;2114
+;Maïs;22;14;2214
+;Menthe;23;15;2315
+;Navet;23;14;2314
+;Oignons;26;14;2614
+;Palmier (coeur);27;14;2714
+;Persil;28;14;2814
+;Petits pois;29;14;2914
+;Poireau;30;14;3014
+;Pois gourmand;23;15;2315
+;Pois mangetout;22;14;2214
+;Poivron;23;14;2314
+;Pousses de bambou;21;17;2117
+;Radis;24;17;2417
+;Radis noir;25;17;2517
+;Salade composée;28;15;2815
+;Tomate;26;15;2615
+;Topinambour;20;14;2014
+;Topinambour;20;15;2015
+;Tomate;20;14;2014
+;Salsifis;21;14;2114
+;Bigorneaux;31;1;311
+;Cabillaud;32;2;322
+;Colin;33;3;333
+;Coquille St-Jacques;31;1;311
+;Coques;32;2;322
+;Crabe;33;3;333
+;Écrevisses;33;3;333
+;Encornet;32;2;322
+;Surimi;29;1;291
+;Sardines;28;1;281
+;Saumon;27;1;271
+;Saumon fumé;26;1;261
+;Soupe de poissons;25;1;251
+;Poulpe;24;1;241
+;Poissons panés;23;1;231
+;Poissons mer;22;1;221
+;Poissons eau douce;21;1;211
+;Moules;20;1;201
+;Maquereaux;19;1;191
+;Agneau;24;8;248
+;Aiguillette de boeuf;23;8;238
+;Aiguillette de poulet;22;8;228
+;Andouille;21;8;218
+;Andouillette;20;8;208
+;Andouillette;19;8;198
+;Bacon;19;8;198
+;Bavette (boeuf);19;10;1910
+;Bifteck de boeuf;20;10;2010
+;Boeuf (entrecôte);21;10;2110
+;Burgers;22;10;2210
+;Caille;23;10;2310
+;Canard;24;10;2410
+;Cervelas;25;10;2510
+;Chair à saucisse;26;10;2610
+;Chipolatas;27;10;2710
+;Chorizo;28;10;2810
+;Côte de boeuf;29;10;2910
+;Côtelettes d'agneau;30;10;3010
+;Côtelettes d'agneau;25;8;258
+;Côtes de porc;26;8;268
+;Côtes de veau;27;8;278
+;Croc's jambon;28;8;288
+;Cuisses poulet rôti;29;8;298
+;Dinde;30;8;308
+;Échine de porc;30;7;307
+;Escalope de veau;29;7;297
+;Escalope de veau;28;7;287
+;Filet mignon;27;7;277
+;Blé dur;7;20;720
+;Bouillon cube;8;20;820
+;Bouillon cube;9;20;920
+;Boulgour;10;20;1020
+;Cannelle;11;20;1120
+;Chapelure;12;20;1220
+;Coriandre;13;20;1320
+;Cornichons;14;20;1420
+;Croûton;15;20;1520
+;Curry;16;20;1620
+;Farine;17;20;1720
+;Farine;7;18;718
+;Graine de sésame;8;18;818
+;Graine de tournesol;9;18;918
+;Graine de tournesol;10;18;1018
+;Graine de tournesol;13;18;1318
+;Graine de sésame;14;18;1418
+;Haricots;15;18;1518
+;Huile;16;18;1618
+;Haricots;16;17;1617
+;Graine de tournesol;15;17;1517
+;Graine de sésame;14;17;1417
+;Farine;13;17;1317
+;Curry;10;17;1017
+;Curry;9;17;917
+;Curry;8;17;817
+;Curry;7;17;717
+;Curry;16;15;1615
+;Graine de sésame;15;15;1515
+;Huile d'olive;14;15;1415
+;Curry;13;15;1315
+;Moutarde;11;15;1115
+;Mayonnaise;10;15;1015
+;Millet;9;15;915
+;Maïzena;8;15;815
+;Lentilles;7;15;715
+;Orge;7;12;712
+;Huile d'olive;8;12;812
+;Pâtes chinoise;9;12;912
+;Pois cassés;10;12;1012
+;Olives;11;12;1112
+;Purée;13;12;1312
+;Quinoa;14;12;1412
+;Riz;15;12;1512
+;Sarrasin;16;12;1612
+;Sauce de soja;17;15;1715
+;Sauces fondue;16;10;1610
+;Semoule;15;10;1510
+;Semoule;14;10;1410
+;Vinaigre;13;10;1310
+;Tapioca;10;10;1010
+;Sel;9;10;910
+;Maïzena;8;10;810
+;Abricots secs;7;10;710
+;Amandes;16;9;169
+;Cassonade;15;9;159
+;Citron confits;14;9;149
+;Dattes;13;9;139
+;Figues sèches;7;7;77
+;Dattes;8;7;87
+;Noisettes;9;7;97
+;Orange confite;10;7;107
+;Pignons;11;7;117
+;Pruneaux;13;7;137
+;Raisins secs;14;7;147
+;Sucre vanillé;15;7;157
+;Pruneaux;16;7;167
+;Sucre vanillé;10;10;1010
+;Pignons;9;10;910
+;Pruneaux;8;10;810
+;Raisins secs;7;10;710
+;Noisettes;10;7;107
+;Noisettes;9;7;97
+;Gingembre confit;7;7;77
+;Noisettes;8;7;87

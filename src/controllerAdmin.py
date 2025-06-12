@@ -1,11 +1,7 @@
+from PyQt6 import QtCore
 from PyQt6.QtCore import QObject
 from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
-from cellule import Cellule
-from graphe import Graphe
-from login import PageConnexion
-from PyQt6 import QtCore
-import time
 
 
 class MagasinController(QObject):
@@ -32,8 +28,9 @@ class MagasinController(QObject):
         self.vue.placer_produit.connect(self.placer_produit)
         self.vue.cellule_cliquee.connect(self.cellule_cliquee)
         self.vue.recherche_changee.connect(self.filtrer_produits)
-        self.vue.spinTableauBordColonnes.valueChanged.connect(self.timer_colonnes)
-        self.vue.spinTableauBordLignes.valueChanged.connect(self.timer_lignes)
+        self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
+        self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
+        self.vue.bouton_popup_signal.connect(self.supprimer_article)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -42,15 +39,10 @@ class MagasinController(QObject):
         else:
             print("Erreur lors du chargement des produits")
 
-    def timer_colonnes(self):
-        valeur_initiale = self.vue.spinTableauBordColonnes.value()
-
-        def verifier_stabilite():
-            valeur_actuelle = self.vue.spinTableauBordColonnes.value()
-            if valeur_actuelle == valeur_initiale:
-                self.changer_colonnes(valeur_actuelle)
-
-        QtCore.QTimer.singleShot(1000, verifier_stabilite)
+    def supprimer_article(self, ligne, colonne, produit):
+        print(f"[CONTROLLER] Suppression de {produit} à ({ligne}, {colonne}) demandée")
+        self.model.effacer_element_grille(ligne, colonne, produit)
+        self.vue.supprimer_article_cellule(ligne, colonne, produit)
 
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
