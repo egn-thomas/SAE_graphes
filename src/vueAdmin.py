@@ -328,9 +328,51 @@ class VueAdmin(QtWidgets.QWidget):
         self.nom_magasin.setMinimumWidth(400)
         self.nom_magasin.setMaximumWidth(400)
         self.nom_magasin.setStyleSheet("padding: 5px;")
+  
         
         layout_header.addWidget(self.label)
         layout_header.addWidget(self.nom_magasin)
+        
+            # Ajout de la légende1
+        legend_container1 = QtWidgets.QWidget(self.partie_droite)
+        legend_layout1 = QtWidgets.QHBoxLayout(legend_container1)
+        legend_layout1.setContentsMargins(10, 0, 10, 10)
+        legend_layout1.setSpacing(5)
+        
+        # Carré de couleur
+        legend_color1 = QtWidgets.QFrame(legend_container1)
+        legend_color1.setFixedSize(20, 20)
+        legend_color1.setStyleSheet("background-color: rgba(100, 10, 10, 1); border: 1px solid black;")
+        
+        # Zone de texte
+        legend_label = QtWidgets.QLabel("couloirs", legend_container1)
+        legend_label.setStyleSheet("color: white; font-size: 14px;")
+        
+        legend_layout1.addWidget(legend_color1)
+        legend_layout1.addWidget(legend_label)
+        
+        
+        
+            # Ajout de la légende2
+        legend_container2 = QtWidgets.QWidget(self.partie_droite)
+        legend_layout2 = QtWidgets.QHBoxLayout(legend_container2)
+        legend_layout2.setContentsMargins(10, 0, 10, 10)
+        legend_layout2.setSpacing(5)
+        
+        # Carré de couleur
+        legend_color2 = QtWidgets.QFrame(legend_container2)
+        legend_color2.setFixedSize(20, 20)
+        legend_color2.setStyleSheet("background-color:  rgba(10, 100, 10, 1); border: 1px solid black;")
+        
+        # Zone de texte
+        legend_label2 = QtWidgets.QLabel("rayons", legend_container2)
+        legend_label2.setStyleSheet("color: white; font-size: 14px;")
+        
+        legend_layout2.addWidget(legend_color2)
+        legend_layout2.addWidget(legend_label2)
+        
+        layout_header.addWidget(legend_container1)
+        layout_header.addWidget(legend_container2)
         
         # Zone du plan avec grille
         self.create_zone_plan()
