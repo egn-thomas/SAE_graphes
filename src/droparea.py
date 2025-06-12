@@ -11,7 +11,6 @@ class DropArea(QLabel):
         self.est_rayon = est_rayon
         self.setAcceptDrops(True)
         
-        # CORRECTION : Initialiser est_rayon par défaut
         self.est_rayon = False
         
         self.default_style = """
@@ -65,7 +64,6 @@ class DropArea(QLabel):
         self.setText(produit)
         self.setStyleSheet(self.filled_style)
         self.placer_produit.emit(self.ligne, self.colonne, produit)
-        # Remplacer l'ancien contenu par le nouveau
         self.articles = [produit]
         event.acceptProposedAction()
         self.enregistrer_produit(produit)

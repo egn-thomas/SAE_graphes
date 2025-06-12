@@ -34,12 +34,7 @@ class VueAdmin(QtWidgets.QWidget):
         self.create_partie_droite()
         
         self.connecter_signaux()
-        
-         # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
-        # Charger la sauvegarde existante (si présente) pour remplir le magasin.
-        self.charger_csv()
-        
         self.popup_actuelle = None
         
     def initialiser_sauvegarde(self):
@@ -55,15 +50,12 @@ class VueAdmin(QtWidgets.QWidget):
         Met à jour les DropAreas en fonction du contenu du fichier sélectionné.
         """
 
-        # Ouvrir une boîte de dialogue pour choisir un fichier
         chemin_fichier, _ = QFileDialog.getOpenFileName(
             self, "Ouvrir un fichier CSV", "", "Fichiers CSV (*.csv)"
         )
 
         if not chemin_fichier:
-            print("Chargement annulé par l'utilisateur.")
-            return  # Aucun fichier sélectionné
-
+            return
         try:
             with open(chemin_fichier, "r", encoding="utf-8") as csvfile:
                 reader = csv.reader(csvfile, delimiter=";")
@@ -387,7 +379,6 @@ class VueAdmin(QtWidgets.QWidget):
         de toutes les cellules de la grille, efface le nom du projet dans le widget
         et supprime la popup active,
         """
-        import csv, os
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
             with open("disposition_magasin.csv", "w", newline='', encoding="utf-8") as csvfile:
@@ -418,6 +409,7 @@ class VueAdmin(QtWidgets.QWidget):
         """Connecte les signaux internes"""
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
         self.bouton_effacer.clicked.connect(self.effacer_projet)
+        self.bouton_ouvrir.clicked.connect(self.charger_csv)
         self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
 
     def on_placer_produit(self, ligne, colonne, produit):
