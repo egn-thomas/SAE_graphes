@@ -479,13 +479,13 @@ class VueAdmin(QtWidgets.QWidget):
     def on_bouton_sauvegarder_clicked(self):
         """
         Slot appelé lorsqu'on clique sur le bouton Sauvegarder.
-        Il émet le signal de sauvegarde et n'appelle aucune méthode de fermeture.
+        Il émet le signal de sauvegarde
         """
         try:
             self.sauvegarder_signal.emit()
             print("Signal de sauvegarde émis.")
         except Exception as e:
-            # Loguez l'exception pour déboguer sans fermer l'appli
+          
             print(f"[ERREUR] lors du clic sur le bouton Sauvegarder: {e}")
         
         
@@ -543,7 +543,7 @@ class VueAdmin(QtWidgets.QWidget):
     
     def sauvegarder_tous_les_produits(self):
         """
-        Parcourt toutes les cellules de la grille (DropArea) et enregistre d'un coup
+        Parcourt toutes les cellules de la grille et enregistre d'un coup tout
         les produits dans le fichier CSV "disposition_magasin_sauvegarde.csv".
         
         Le CSV comporte 5 colonnes:
@@ -553,8 +553,8 @@ class VueAdmin(QtWidgets.QWidget):
         - Y (coordonnée ligne, valeur numérique)
         - Position (coordonnées formatées, ici "XY")
         
-        Cette méthode ouvre le fichier en mode écriture, ce qui écrase l'ancien contenu,
-        et écrit l'état actuel de la grille.
+        Cette méthode écrase l'ancien contenu,
+        et réécrit la grille actuelle.
         """
         file_path = "disposition_magasin_sauvegarde.csv"
         header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
@@ -576,7 +576,7 @@ class VueAdmin(QtWidgets.QWidget):
                         # Si vous travaillez en 1-base, convertissez-les ici ou ajustez la logique.
                         x = drop_area.colonne  
                         y = drop_area.ligne
-                        # Exemple de position formatée : concaténation directe de x et y
+                        y
                         coord_formatee = f"{x}{y}"
                         writer.writerow([nom_projet, produit, x, y, coord_formatee])
             print("Tous les produits ont été sauvegardés avec succès dans le fichier de sauvegarde.")
