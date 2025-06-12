@@ -7,6 +7,7 @@ from login import PageConnexion
 def main():
     app = QApplication(sys.argv)
 
+
     login_dialog = PageConnexion()
     if login_dialog.exec():
         if login_dialog.role == "admin":

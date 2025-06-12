@@ -280,7 +280,7 @@ class VueAdmin(QtWidgets.QWidget):
         # Contrôles pour les colonnes
         layout_colonnes = QtWidgets.QHBoxLayout()
         self.spinTableauBordColonnes = QtWidgets.QSpinBox(self.tableau_de_bord)
-        self.spinTableauBordColonnes.setRange(0, 50)
+        self.spinTableauBordColonnes.setRange(1, 50)
         self.spinTableauBordColonnes.setValue(35)
         self.spinTableauBordColonnes.setStyleSheet("max-width: 70px;")
         label_colonnes = QtWidgets.QLabel("Nombre de colonnes visibles", self.tableau_de_bord)
@@ -291,7 +291,7 @@ class VueAdmin(QtWidgets.QWidget):
         # Contrôles pour les lignes
         layout_lignes = QtWidgets.QHBoxLayout()
         self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableau_de_bord)
-        self.spinTableauBordLignes.setRange(0, 60)
+        self.spinTableauBordLignes.setRange(1, 60)
         self.spinTableauBordLignes.setValue(52)
         self.spinTableauBordLignes.setStyleSheet("max-width: 70px;")
         label_lignes = QtWidgets.QLabel("Nombre de lignes visibles", self.tableau_de_bord)
