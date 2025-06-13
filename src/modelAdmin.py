@@ -78,7 +78,7 @@ class MagasinModel:
 
     def _charger_et_organiser_produits(self, csv_path):
         """Charge et organise les produits par catégorie"""
-        loader = lp.csvLoader(csv_path)
+        loader = lp.CsvLoader(csv_path)
         produits = loader.extract_all()
         
         self.categories = produits[0]

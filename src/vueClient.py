@@ -20,7 +20,7 @@ class VueClient(QtWidgets.QWidget):
     recherche_changee = QtCore.pyqtSignal(str)
     sauvegarder_signal = QtCore.pyqtSignal()
     deconnexion_signal = QtCore.pyqtSignal()
-    ouvrir_signal = QtCore.pyqtSignal()
+    ouvrir_signal = QtCore.pyqtSignal(str)
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -51,7 +51,13 @@ class VueClient(QtWidgets.QWidget):
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
     def charger_csv(self):
-        self.ouvrir_signal.emit()
+        fichier, _ = QFileDialog.getOpenFileName(
+            parent=None,
+            caption="Choisir un fichier CSV",
+            filter="Fichiers CSV (*.csv);;Tous les fichiers (*)"
+        )
+        if fichier:
+            self.ouvrir_signal.emit(fichier)
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """

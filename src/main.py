@@ -21,7 +21,7 @@ def lancer_application_depuis_connexion(app):
                 controller = ClientController()
                 controller.vue.show()
                 app.exec()
-                if controller.retour_connection:
+                if controller.retour_connexion:
                     continue
                 else:
                     break

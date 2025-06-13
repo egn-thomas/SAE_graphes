@@ -34,8 +34,11 @@ class ClientController(QObject):
     def initialiser(self):
         """Initialise l'application avec les données de base"""
 
-    def ouvrir_magasin(self):
-        self.model.charger_produits()
+    def ouvrir_magasin(self, fichier):
+        if self.model.charger_produits("liste_produits.csv", fichier):
+            self.vue.afficher_categories(self.model.produits_par_categorie.keys())
+        else:
+            print(f"Échec du chargement du fichier : {fichier}")
 
     def supprimer_article(self, ligne, colonne, produit):
         print(f"[CONTROLLER] Suppression de {produit} à ({ligne}, {colonne}) demandée")

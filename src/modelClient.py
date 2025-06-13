@@ -64,13 +64,13 @@ class ClientModel:
         cellule = self.graphe.get_cellule(ligne, colonne)
         return cellule.contenu if cellule else []
     
-    def charger_produits(self,  nom_fichier, csv_path=None,):
+    def charger_produits(self,  nom_fichier, nom_magasin, csv_path=None):
         """Charge les produits depuis le CSV"""
         if csv_path is None:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             csv_path = os.path.join(script_dir, "..", nom_fichier)
         try:
-            self._charger_et_organiser_produits(csv_path, magasin)
+            self._charger_et_organiser_produits(csv_path, nom_magasin)
             return True
         except FileNotFoundError as e:
             print(f"Erreur : fichier non trouvé à {csv_path} -> {e}")
