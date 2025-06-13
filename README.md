@@ -35,6 +35,12 @@ Une sauvegarde automatique est effectuée en continu dans un fichier `sauvegarde
 
 La grille du magasin est ajustable via des boîtes numériques.
 
+###### conexion 
+
+On peut se connecter aux aplication admin et client en entrant sur le bon nom d'utilisateur et le bon mot de passe.
+- on a le nom d'utilisateur "admin" avec comme mot de passe "admin" qui permet d'acceder à l'aplication admin.
+- on a le nom d'utilisateur "client" avec comme mot de passe "client" qui permet d'acceder à l'aplication client.
+
 ### Interactions avancées
 
 - Un clic sur une case du magasin affiche un popup avec les articles qu'elle contient.
