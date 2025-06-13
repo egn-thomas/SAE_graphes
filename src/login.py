@@ -1,4 +1,6 @@
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton
+from vueAdmin import VueAdmin
+from vueClient import VueClient
 
 class PageConnexion(QDialog):
     def __init__(self):
@@ -24,11 +26,15 @@ class PageConnexion(QDialog):
 
     def verifier_identifiant(self):
         identifiant = self.identifiant_input.text().strip().lower()
+
         if identifiant == "admin":
             self.role = "admin"
-            self.accept()
+            self.accept()  # Ferme le QDialog et renvoie QDialog.Accepted
         elif identifiant == "client":
             self.role = "client"
             self.accept()
         else:
             self.label.setText("Identifiant inconnu")
+
+    def get_infos_connexion(self):
+        return self.role

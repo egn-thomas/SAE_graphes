@@ -1,12 +1,14 @@
-from PyQt6 import QtCore, QtWidgets, QtGui
-from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QFileDialog
 from graphe import Graphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
+
+from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtWidgets import QFileDialog
+
+from collections import Counter
 import os
 import csv
-from collections import Counter
 
 class VueAdmin(QtWidgets.QWidget):
     """Vue principale de l'interface administrateur"""
@@ -22,6 +24,7 @@ class VueAdmin(QtWidgets.QWidget):
     recherche_changee = QtCore.pyqtSignal(str)
     sauvegarder_signal = QtCore.pyqtSignal()
     bouton_popup_signal = QtCore.pyqtSignal(int, int, str)
+    deconnexion_signal = QtCore.pyqtSignal()
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -38,9 +41,6 @@ class VueAdmin(QtWidgets.QWidget):
         self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
 
-        
-        
-        
          # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
@@ -222,10 +222,6 @@ class VueAdmin(QtWidgets.QWidget):
         except Exception as e:
             print("Erreur dans creer_popup_articles :", e)
             return None
-    
-    def debug_emit(self, l, c, p):
-        print(f"[DEBUG VUE] Suppression demandée : {p} à ({l}, {c})")
-        self.bouton_popup_signal.emit(l, c, p)
 
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
@@ -368,7 +364,7 @@ class VueAdmin(QtWidgets.QWidget):
         layout_header.addWidget(self.label)
         layout_header.addWidget(self.nom_magasin)
         
-            # Ajout de la légende1
+        # légende1
         legend_container1 = QtWidgets.QWidget(self.partie_droite)
         legend_layout1 = QtWidgets.QHBoxLayout(legend_container1)
         legend_layout1.setContentsMargins(10, 0, 10, 10)
@@ -402,12 +398,21 @@ class VueAdmin(QtWidgets.QWidget):
         # Zone de texte
         legend_label2 = QtWidgets.QLabel("rayons", legend_container2)
         legend_label2.setStyleSheet("color: white; font-size: 14px;")
+
+        bouton_deconnection = QtWidgets.QPushButton("Se déconnecter")
+        bouton_deconnection.setStyleSheet("padding: 5px; margin-left: 20px")
+        bouton_deconnection.clicked.connect(self.fermer_et_connexion)
+
         
         legend_layout2.addWidget(legend_color2)
         legend_layout2.addWidget(legend_label2)
+
+        bouton_deconnection = QtWidgets.QPushButton("Se déconnecter")
+        bouton_deconnection.clicked.connect(self.on_bouton_deconnection)
         
         layout_header.addWidget(legend_container1)
         layout_header.addWidget(legend_container2)
+        layout_header.addWidget(bouton_deconnection)
         
         # Zone du plan avec grille
         self.create_zone_plan()
@@ -415,6 +420,10 @@ class VueAdmin(QtWidgets.QWidget):
         layout.addWidget(header, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.zone_superposee, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.partie_droite, stretch=1)
+    
+    def on_bouton_deconnection(self):
+        """emmet le signal de deconnexion"""
+        self.deconnexion_signal.emit()
     
     def create_zone_plan(self):
         """Crée la zone du plan avec la grille interactive"""
@@ -510,6 +519,9 @@ class VueAdmin(QtWidgets.QWidget):
         self.bouton_ouvrir.clicked.connect(self.charger_csv)
         self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
         self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
+
+    def fermer_et_connexion(self):
+        self.deconnecter_signal.emit()
 
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""

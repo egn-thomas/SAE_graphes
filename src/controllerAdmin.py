@@ -2,6 +2,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QObject
 from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
+from login import PageConnexion
 
 
 class MagasinController(QObject):
@@ -13,6 +14,7 @@ class MagasinController(QObject):
         self.model = MagasinModel()
         self.model.parent = self.vue
         self.categorie_courante = None
+        self.retour_connexion = False
         self.connecter_signaux()
         self.initialiser()
     
@@ -20,9 +22,7 @@ class MagasinController(QObject):
         """Connecte les signaux de la vue aux méthodes du contrôleur"""
         self.vue.bouton_effacer.clicked.connect(self.effacer_projet)
         self.vue.nom_magasin.textChanged.connect(self.mise_a_jour_nom_magasin)
-        
         self.vue.recherche_articles.textChanged.connect(self.filtrer_produits)
-        
         self.vue.categorie_cliquee.connect(self.afficher_produits_categorie)
         self.vue.retour_categories.connect(self.afficher_categories)
         self.vue.placer_produit.connect(self.placer_produit)
@@ -31,6 +31,7 @@ class MagasinController(QObject):
         self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
         self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
         self.vue.bouton_popup_signal.connect(self.supprimer_article)
+        self.vue.deconnexion_signal.connect(self.deconnecter)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -44,10 +45,21 @@ class MagasinController(QObject):
         self.model.effacer_element_grille(ligne, colonne, produit)
         self.vue.supprimer_article_cellule(ligne, colonne, produit)
 
+    def deconnecter(self):
+        print("[DEBUG] : deconnexion demandée")
+        self.retour_connexion = True
+        self.vue.close()
+
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
         self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
+        self.model.initialiser_graphe()
+
+    def changer_lignes(self, valeur):
+        print(f"Lignes modifiées : {valeur}")
+        self.model.nb_lignes = valeur
+        self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
 
     def timer_lignes(self):
@@ -59,12 +71,6 @@ class MagasinController(QObject):
                 self.changer_lignes(valeur_actuelle)
 
         QtCore.QTimer.singleShot(1000, verifier_stabilite)
-
-    def changer_lignes(self, valeur):
-        print(f"Lignes modifiées : {valeur}")
-        self.model.nb_lignes = valeur
-        self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
-        self.model.initialiser_graphe()
 
     def filtrer_produits(self, texte_recherche):
         """Filtre les produits selon le texte de recherche dans toutes les catégories"""

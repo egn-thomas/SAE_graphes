@@ -62,7 +62,7 @@ class MagasinModel:
         """Récupère les articles d'une cellule"""
         cellule = self.graphe.get_cellule(ligne, colonne)
         return cellule.contenu if cellule else []
-
+    
     def charger_produits(self, csv_path=None):
         """Charge les produits depuis le CSV"""
         if csv_path is None:
