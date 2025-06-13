@@ -16,6 +16,12 @@ class Graphe:
         self.cases_colorees = cases_colorees
         self.parent = parent
         self.panier = {}
+        for i in range(nb_lignes):
+            for j in range(nb_colonnes):
+                est_rayon = (i, j) in self.cases_colorees
+                self.graphe[(i, j)] = Cellule(contenu=(i, j), est_rayon=est_rayon)
+                if est_rayon:
+                    print(f"Cellule ({i},{j}) est un rayon")
         self.initialiser_graphe()
 
     def initialiser_graphe(self):

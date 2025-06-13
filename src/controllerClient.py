@@ -56,6 +56,10 @@ class ClientController(QObject):
         """enlève un produit du panier"""
         self.vue.enlever_produit(nom_produit)
         self.model.enlever_produit(nom_produit)
+        self.chemin_rapide = self.graphe.generer_chemin_complet(self.model.liste_panier, position_depart=(4,38))
+        print (self.chemin_rapide)
+        for (i, j) in self.chemin_rapide:
+            self.vue.colorier_cellule_en_orange(i, j)
 
     def ouvrir_magasin(self, fichier):
         """ouvre un magazin pour remplir la liste"""
