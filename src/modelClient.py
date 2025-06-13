@@ -21,6 +21,7 @@ class ClientModel:
         self.categories = []
         self.produits_par_categorie = {}
         self.liste_produits = []
+        self.liste_panier = []
 
         self.parent = None
         self.initialiser_graphe()
@@ -29,6 +30,11 @@ class ClientModel:
         """Initialise le graphe du magasin"""
         self.graphe = Graphe(self.nb_lignes, self.nb_colonnes, self.cases_rayon, self.parent)
         return self.graphe
+    
+    def ajouter_produit(self, nom_produit):
+        """ajoute le produit a la liste"""
+        self.liste_panier.append(nom_produit)
+        print (self.liste_panier)
     
     def effacer_element_grille(self, ligne, colonne, produit):
         """Supprime un élément spécifique du CSV en fonction de la ligne, colonne et produit."""

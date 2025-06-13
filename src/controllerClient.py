@@ -26,15 +26,20 @@ class ClientController(QObject):
         self.vue.categorie_cliquee.connect(self.afficher_produits_categorie)
         self.vue.retour_categories.connect(self.afficher_categories)
         self.vue.recherche_changee.connect(self.filtrer_produits)
-        self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
-        self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
         self.vue.deconnexion_signal.connect(self.deconnecter)
         self.vue.ouvrir_signal.connect(self.ouvrir_magasin)
+        self.vue.produit_signal.connect(self.ajouter_au_panier)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
 
+    def ajouter_au_panier(self, nom_produit):
+        """ajoute le produit correspondant au panier"""
+        self.vue.ajouter_produit(nom_produit)
+        self.model.ajouter_produit(nom_produit)
+
     def ouvrir_magasin(self, fichier):
+        """ouvre un magazin pour remplir la liste"""
         if self.model.charger_produits("liste_produits.csv", fichier):
             self.vue.afficher_categories(self.model.produits_par_categorie.keys())
         else:

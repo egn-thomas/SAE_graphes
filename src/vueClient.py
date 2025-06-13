@@ -21,6 +21,7 @@ class VueClient(QtWidgets.QWidget):
     sauvegarder_signal = QtCore.pyqtSignal()
     deconnexion_signal = QtCore.pyqtSignal()
     ouvrir_signal = QtCore.pyqtSignal(str)
+    produit_signal = QtCore.pyqtSignal(str)
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -89,76 +90,6 @@ class VueClient(QtWidgets.QWidget):
 
         except Exception as e:
             print(f"[ERREUR] Lors de la mise à jour du CSV: {e}")
-    
-    
-    def afficher_popup_articles(self, ligne, colonne, articles):
-        """Affiche une popup listant les articles d'une cellule cliquée."""
-        if not articles:
-            return
-
-        if self.popup_actuelle:
-            self.popup_actuelle.hide()
-            self.popup_actuelle.deleteLater()
-
-        popup = self.creer_popup_articles(articles, ligne, colonne)
-        popup.show()
-        self.popup_actuelle = popup
-
-    def creer_popup_articles(self, articles, ligne, colonne):
-        try:
-            if not isinstance(articles, list):
-                print("Erreur : 'articles' n'est pas une liste")
-                return None
-
-            popup = QtWidgets.QWidget(self)
-            popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
-            popup.setStyleSheet("""
-                background-color: #2c2c2c;
-                color: white;
-                border: 1px solid #444;
-                border-radius: 5px;
-            """)
-            popup.setMinimumHeight(100)
-
-            layout = QtWidgets.QVBoxLayout(popup)
-            layout.setContentsMargins(10, 10, 10, 10)
-            layout.setSpacing(5)
-
-            titre = QtWidgets.QLabel("Articles dans cette case :", popup)
-            titre.setStyleSheet("font-weight: bold; font-size: 14px;")
-            titre.setMaximumHeight(50)
-            layout.addWidget(titre)
-
-            from collections import Counter
-            compte_articles = Counter(articles)
-
-            for produit, quantite in compte_articles.items():
-                texte = f"{produit} x{quantite}" if quantite > 1 else str(produit)
-                bouton_popup = QtWidgets.QPushButton(texte, popup)
-                bouton_popup.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-                bouton_popup.setStyleSheet("padding: 5px;")
-
-                def create_slot(bouton, produit=produit):
-                    def slot():
-                        self.bouton_popup_signal.emit(ligne, colonne, produit)
-                        layout.removeWidget(bouton)
-                        bouton.deleteLater()
-
-                        if layout.count() <= 1:
-                            popup.close()
-                    return slot
-
-                bouton_popup.clicked.connect(create_slot(bouton_popup))
-                layout.addWidget(bouton_popup)
-
-            popup.adjustSize()
-            screen = QtWidgets.QApplication.primaryScreen().geometry()
-            popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
-            return popup
-
-        except Exception as e:
-            print("Erreur dans creer_popup_articles :", e)
-            return None
 
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
@@ -172,10 +103,10 @@ class VueClient(QtWidgets.QWidget):
         self.create_articles()
         
         # Section du tableau de bord
-        self.create_tableau_bord()
+        self.create_panier()
         
-        layout.addWidget(self.liste_articles, stretch=2)
-        layout.addWidget(self.tableau_de_bord, stretch=1)
+        layout.addWidget(self.liste_articles, stretch=1)
+        layout.addWidget(self.panier, stretch=1)
         
         self.layout.addWidget(self.partie_gauche, stretch=1)
     
@@ -203,10 +134,30 @@ class VueClient(QtWidgets.QWidget):
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("border: none;")
         scroll.setWidget(self.articles_box)
+
+        # Boutons d'action
+        layout_boutons = QtWidgets.QHBoxLayout()
+        layout_boutons.setContentsMargins(10, 10, 10, 10)
+
+        self.bouton_ouvrir = QtWidgets.QPushButton("Ouvrir", self.recherche_articles)
+        self.bouton_sauvegarder = QtWidgets.QPushButton("Sauvegarder", self.liste_articles)
+        self.bouton_effacer = QtWidgets.QPushButton("Effacer", self.liste_articles)
+
+        layout_boutons.addWidget(self.bouton_ouvrir)
+        layout_boutons.addWidget(self.bouton_sauvegarder)
+        layout_boutons.addWidget(self.bouton_effacer)
+
+        for bouton in [self.bouton_ouvrir, self.bouton_sauvegarder, self.bouton_effacer]:
+            bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            bouton.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
+            bouton.setMaximumWidth(200)
+            bouton.setMaximumHeight(50)
         
         layout_articles.addWidget(self.recherche_articles, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft, stretch=1)
         layout_articles.addWidget(scroll, stretch=12)
         self.recherche_articles.textChanged.connect(self.on_recherche_changee)
+
+        layout_articles.addLayout(layout_boutons)
     
     def on_recherche_changee(self, texte):
         """Lorsque le texte change"""
@@ -218,62 +169,38 @@ class VueClient(QtWidgets.QWidget):
             return produits
         return [p for p in produits if filtre.lower() in p.lower()]
     
-    def create_tableau_bord(self):
+    def create_panier(self):
         """Crée la section du tableau de bord"""
-        self.tableau_de_bord = QtWidgets.QWidget(self.partie_gauche)
-        self.tableau_de_bord.setStyleSheet("background-color: #2c2c2c; color: white;")
-        self.tableau_de_bord.setMinimumHeight(100)
-        self.tableau_de_bord.setContentsMargins(40, 0, 0, 0)
+        self.panier = QtWidgets.QWidget(self.partie_gauche)
+        self.panier.setStyleSheet("background-color: #2c2c2c; color: white;")
+        self.panier.setMinimumHeight(100)
+        self.panier.setContentsMargins(40, 0, 0, 0)
         
-        layout_tableau_bord = QtWidgets.QVBoxLayout(self.tableau_de_bord)
+        # Layout principal du panier
+        layout_panier_principal = QtWidgets.QVBoxLayout(self.panier)
         
-        self.label_tableau_bord = QtWidgets.QLabel("Réglages du magasin", self.tableau_de_bord)
+        # Label titre
+        self.label_panier = QtWidgets.QLabel("<i>Votre panier</i>", self.panier)
+        layout_panier_principal.addWidget(self.label_panier, alignment=QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignHCenter)
         
-        # Contrôles pour les colonnes
-        layout_colonnes = QtWidgets.QHBoxLayout()
-        self.spinTableauBordColonnes = QtWidgets.QSpinBox(self.tableau_de_bord)
-        self.spinTableauBordColonnes.setRange(1, 50)
-        self.spinTableauBordColonnes.setValue(35)
-        self.spinTableauBordColonnes.setStyleSheet("max-width: 70px;")
-        label_colonnes = QtWidgets.QLabel("Nombre de colonnes visibles", self.tableau_de_bord)
+        # Créer la zone scrollable
+        self.scroll_area = QtWidgets.QScrollArea(self.panier)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; background-color: #2c2c2c; }")
         
-        layout_colonnes.addWidget(self.spinTableauBordColonnes)
-        layout_colonnes.addWidget(label_colonnes)
+        # Widget contenu pour le scroll
+        self.widget_contenu_panier = QtWidgets.QWidget()
+        self.widget_contenu_panier.setStyleSheet("background-color: #2c2c2c;")
         
-        # Contrôles pour les lignes
-        layout_lignes = QtWidgets.QHBoxLayout()
-        self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableau_de_bord)
-        self.spinTableauBordLignes.setRange(1, 60)
-        self.spinTableauBordLignes.setValue(52)
-        self.spinTableauBordLignes.setStyleSheet("max-width: 70px;")
-        label_lignes = QtWidgets.QLabel("Nombre de lignes visibles", self.tableau_de_bord)
+        # Layout pour le contenu scrollable (c'est celui où vous ajouterez vos produits)
+        self.layout_panier = QtWidgets.QVBoxLayout(self.widget_contenu_panier)
+        self.layout_panier.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         
-        layout_lignes.addWidget(self.spinTableauBordLignes)
-        layout_lignes.addWidget(label_lignes)
+        # Connecter le widget contenu au scroll area
+        self.scroll_area.setWidget(self.widget_contenu_panier)
         
-        # Boutons d'action
-        layout_boutons = QtWidgets.QHBoxLayout()
-        layout_boutons.setContentsMargins(10, 10, 10, 10)
-        
-        self.bouton_ouvrir = QtWidgets.QPushButton("Ouvrir", self.tableau_de_bord)
-        self.bouton_sauvegarder = QtWidgets.QPushButton("Sauvegarder", self.tableau_de_bord)
-        self.bouton_effacer = QtWidgets.QPushButton("Effacer", self.tableau_de_bord)
-        
-        for bouton in [self.bouton_ouvrir, self.bouton_sauvegarder, self.bouton_effacer]:
-            bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-            bouton.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
-            bouton.setMaximumWidth(200)
-            bouton.setMaximumHeight(50)
-        
-        layout_boutons.addWidget(self.bouton_ouvrir)
-        layout_boutons.addWidget(self.bouton_sauvegarder)
-        layout_boutons.addWidget(self.bouton_effacer)
-        
-        # Ajout des layout au tableau de bord
-        layout_tableau_bord.addWidget(self.label_tableau_bord)
-        layout_tableau_bord.addLayout(layout_colonnes)
-        layout_tableau_bord.addLayout(layout_lignes)
-        layout_tableau_bord.addLayout(layout_boutons)
+        # Ajouter le scroll area au layout principal
+        layout_panier_principal.addWidget(self.scroll_area)
             
     def create_partie_droite(self):
         """Crée la partie droite avec la grille et l'image du magazin"""
@@ -518,13 +445,27 @@ class VueClient(QtWidgets.QWidget):
         btn_retour.clicked.connect(self.retour_categories.emit)
         self.layout_articles_box.addWidget(btn_retour)
         
-        # Produits draggables
         for produit in produits:
-            label = DraggableLabel(produit, self.articles_box)
-            self.layout_articles_box.addWidget(label)
+            btn_produit = QtWidgets.QPushButton(produit, self.articles_box)
+            btn_produit.setStyleSheet("background-color: #232323; padding: 10px;")
+            btn_produit.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            btn_produit.clicked.connect(self.on_produit_clique)
+            self.layout_articles_box.addWidget(btn_produit, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
         
         self.articles_box.adjustSize()
         self.articles_box.update()
+
+    def on_produit_clique(self):
+        """emmet le signal d'un produit"""
+        bouton_clique = self.sender()
+        if isinstance(bouton_clique, QtWidgets.QPushButton):
+            texte_produit = bouton_clique.text()
+            self.produit_signal.emit(texte_produit)
+
+    def ajouter_produit(self, nom_produit):
+        btn = QtWidgets.QPushButton(nom_produit)
+        self.layout_panier.addWidget(btn)
+        
     
     def clear_layout(self, layout):
         """Vide un layout de tous ses widgets"""
