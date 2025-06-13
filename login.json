@@ -1,0 +1,27 @@
+{
+
+  "admin": {
+    "password": "21232f297a57a5a743894a0e4a801fc3",
+    "role": "admin"
+  },
+  "client": {
+    "password": "62608e08adc29a8d6dbc9754e659f125",
+    "role": "client"
+  },
+  "cece": { 
+  "password":"707c636fc43b41bf95896592d8410fe9",
+    "role": "admin"
+  },
+  "timéo": {
+    "password":"b5b65f59070d89c4fc36f66b90904982",
+    "role":"client"
+  },
+  "principalementLara":{
+    "password":"6167a554b80813d8e8ff3acb97cde989",
+    "role":"client"
+  },
+  "thomas":{
+    "passworld":"ef6e65efc188e7dffd7335b646a85a21",
+    "role":"admin"
+  }
+}
