@@ -1,6 +1,6 @@
 from graphe import Graphe
 from droparea import DropArea
-from modelAdmin import MagasinModel
+from modelClient import ClientModel
 
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
@@ -18,9 +18,9 @@ class VueClient(QtWidgets.QWidget):
     retour_categories = QtCore.pyqtSignal()
     nom_magasin_change = QtCore.pyqtSignal(str)
     recherche_changee = QtCore.pyqtSignal(str)
-    sauvegarder_signal = QtCore.pyqtSignal()
     deconnexion_signal = QtCore.pyqtSignal()
     ouvrir_signal = QtCore.pyqtSignal(str)
+    effacer_signal = QtCore.pyqtSignal()
     produit_signal = QtCore.pyqtSignal(str)
     enlever_produit_signal = QtCore.pyqtSignal(str)
 
@@ -36,7 +36,6 @@ class VueClient(QtWidgets.QWidget):
         self.create_partie_gauche()
         self.create_partie_droite()
         
-        self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
 
         self.initialiser_sauvegarde()
@@ -53,11 +52,14 @@ class VueClient(QtWidgets.QWidget):
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
     def charger_csv(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        repertoire_defaut = os.path.join(script_dir, "..", "magasins/")
         fichier, _ = QFileDialog.getOpenFileName(
             parent=None,
-            caption="Choisir un fichier CSV",
+            caption="Choisissez le magasin où vous souhaitez aller",
+            directory = repertoire_defaut,
             filter="Fichiers CSV (*.csv);;Tous les fichiers (*)"
-        )
+            )
         if fichier:
             self.ouvrir_signal.emit(fichier)
 
@@ -141,14 +143,12 @@ class VueClient(QtWidgets.QWidget):
         layout_boutons.setContentsMargins(10, 10, 10, 10)
 
         self.bouton_ouvrir = QtWidgets.QPushButton("Ouvrir", self.recherche_articles)
-        self.bouton_sauvegarder = QtWidgets.QPushButton("Sauvegarder", self.liste_articles)
         self.bouton_effacer = QtWidgets.QPushButton("Effacer", self.liste_articles)
 
         layout_boutons.addWidget(self.bouton_ouvrir)
-        layout_boutons.addWidget(self.bouton_sauvegarder)
         layout_boutons.addWidget(self.bouton_effacer)
 
-        for bouton in [self.bouton_ouvrir, self.bouton_sauvegarder, self.bouton_effacer]:
+        for bouton in [self.bouton_ouvrir, self.bouton_effacer]:
             bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
             bouton.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
             bouton.setMaximumWidth(200)
@@ -325,68 +325,6 @@ class VueClient(QtWidgets.QWidget):
         
         self.cellules_grille = {}
         self.create_grille(52, 35)
-    
-    def create_grille(self, rows, cols):
-        """Crée la grille de cellules interactives"""
-        # Nettoyer l'ancienne grille
-        for cellule in self.cellules_grille.values():
-            cellule.deleteLater()
-        self.cellules_grille.clear()
-        
-        model = MagasinModel()
-        cases_colorees = model.analyser_image(rows, cols)
-        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
-        self.graphe.afficher_grille(self.labels_grille)
-        
-        for (i, j), drop_area in self.graphe.cellules_graphiques.items():
-            drop_area.placer_produit.connect(self.on_placer_produit)
-            drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
-            self.cellules_grille[(i, j)] = drop_area
-            
-    def effacer_projet(self):
-        """
-        Réinitialise le fichier '../magasins/sauvegarde_rapide.csv', vide le contenu
-        de toutes les cellules de la grille, efface le nom du projet dans le widget
-        et supprime la popup active,
-        """
-        try:
-            # Réinitialisation du CSV (en gardant l'en-tête)
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
-            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
-                writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
-            print("Fichier CSV réinitialisé avec succès.")
-        except Exception as e:
-            print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
-
-        # Effacer le contenu visuel de toutes les cellules de la grille (DropArea)
-        for cell in self.labels_grille.findChildren(DropArea):
-            cell.setText("")
-            cell.setStyleSheet(cell.default_style)
-            cell.articles = []  # Réinitialiser le contenu interne
-
-        # Effacer le nom du projet affiché dans le widget
-        self.nom_magasin.setText("")
-
-        # Supprimer la popup active, si elle existe
-        if hasattr(self, "popup_actuelle") and self.popup_actuelle:
-            self.popup_actuelle.hide()
-            self.popup_actuelle.deleteLater()
-            self.popup_actuelle = None
-
-        print("Contenu du projet, nom affiché et pop-up effacés. L'application reste ouverte.")
-    
-    def connecter_signaux(self):
-        """Connecte les signaux internes"""
-        self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
-        self.bouton_effacer.clicked.connect(self.effacer_projet)
-        self.bouton_ouvrir.clicked.connect(self.charger_csv)
-        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
-        self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
-
-    def fermer_et_connexion(self):
-        self.deconnecter_signal.emit()
 
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
@@ -402,23 +340,41 @@ class VueClient(QtWidgets.QWidget):
                 if drop_area.articles and len(drop_area.articles) > 0:
                     self.afficher_popup_articles(ligne, colonne, drop_area.articles)
                 break
+
+    def on_placer_produit(self, ligne, colonne, produit):
+        """Émet le signal de placement de produit"""
+        self.placer_produit.emit(ligne, colonne, produit)
     
-    def on_bouton_sauvegarder_clicked(self):
-        """Slot appelé lorsqu'on clique sur le bouton Sauvegarder."""
-        try:
-            self.sauvegarder_signal.emit()
-            print("Signal de sauvegarde émis.")
-        except Exception as e:
-          
-            print(f"[ERREUR] lors du clic sur le bouton Sauvegarder: {e}")
+    def create_grille(self, rows, cols):
+        """Crée la grille de cellules interactives"""
+        # Nettoyer l'ancienne grille
+        for cellule in self.cellules_grille.values():
+            cellule.deleteLater()
+        self.cellules_grille.clear()
         
-    def supprimer_article_cellule(self, ligne, colonne, produit):
-        """Supprime un article d'une cellule DropArea spécifique"""
-        for drop_area in self.labels_grille.findChildren(DropArea):
-            if drop_area.ligne == ligne and drop_area.colonne == colonne:
-                if produit in drop_area.articles:
-                    drop_area.articles.remove(produit)
-            drop_area.mettre_a_jour_apparence()
+        model = ClientModel()
+        cases_colorees = model.analyser_image(rows, cols)
+        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
+        self.graphe.afficher_grille(self.labels_grille)
+        
+        for (i, j), drop_area in self.graphe.cellules_graphiques.items():
+            drop_area.placer_produit.connect(self.on_placer_produit)
+            drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
+            self.cellules_grille[(i, j)] = drop_area
+    
+    def connecter_signaux(self):
+        """Connecte des signaux internes"""
+        self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
+        self.bouton_ouvrir.clicked.connect(self.charger_csv)
+        self.bouton_effacer.clicked.connect(self.on_bouton_fermer)
+        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
+
+    def fermer_et_connexion(self):
+        self.deconnecter_signal.emit()
+
+    def on_bouton_fermer(self):
+        """emmet le signal pour effacer le panier"""
+        self.effacer_signal.emit()
 
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
@@ -466,8 +422,9 @@ class VueClient(QtWidgets.QWidget):
     def ajouter_produit(self, nom_produit):
         """ajoute un produit au panier"""
         btn = QtWidgets.QPushButton(nom_produit)
+        btn.setStyleSheet("max-width: 200px")
         btn.clicked.connect(lambda checked: self.enlever_produit_panier())
-        self.layout_panier.addWidget(btn)
+        self.layout_panier.addWidget(btn, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignCenter)
 
     def enlever_produit_panier(self):
         """emmet le signal de suppression"""
@@ -499,66 +456,6 @@ class VueClient(QtWidgets.QWidget):
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-    
-    def mettre_a_jour_grille(self, rows, cols):
-        """Met à jour la grille avec de nouvelles dimensions"""
-        if rows is not None:
-            self.rows = rows
-        if cols is not None:
-            self.cols = cols
-        self.create_grille(rows, cols)
-    
-    def effacer_grille(self):
-        """Efface tous les produits de la grille"""
-        for cellule in self.cellules_grille.values():
-            cellule.setText("")
-            cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.8); background-color: #00000000;")
-
-    def sauvegarder_tous_les_produits(self):
-        """
-        Ouvre un explorateur de fichiers pour permettre à l'utilisateur
-        de choisir où sauvegarder les données de la grille au format CSV.
-        """
-        # Ouvre le dialogue pour choisir le fichier
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Enregistrer la disposition du magasin",
-            "disposition_magasin.csv",  # nom par défaut
-            "Fichiers CSV (*.csv);;Tous les fichiers (*)"
-        )
-
-        # Si l'utilisateur annule, on quitte la méthode
-        if not file_path:
-            print("[INFO] Sauvegarde annulée par l'utilisateur.")
-            return
-
-        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
-        nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
-
-        try:
-            with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
-                writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(header)
-
-                # Parcourir toutes les cellules de la grille
-                for drop_area in self.labels_grille.findChildren(DropArea):
-                    if hasattr(drop_area, "articles") and drop_area.articles:
-                        produit_counts = Counter(drop_area.articles)
-                        x, y = drop_area.colonne, drop_area.ligne
-                        coord_formatee = f"{x}{y}"
-                        for prod, quantite in produit_counts.items():
-                            produit_str = f"{prod} x{quantite}" if quantite > 1 else prod
-                            writer.writerow([nom_projet, produit_str, x, y, coord_formatee])
-                    else:
-                        produit = drop_area.text().strip()
-                        if produit:
-                            x, y = drop_area.colonne, drop_area.ligne
-                            coord_formatee = f"{x}{y}"
-                            writer.writerow([nom_projet, produit, x, y, coord_formatee])
-
-            print(f"[INFO] Tous les produits ont été sauvegardés dans : {file_path}")
-        except Exception as e:
-            print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
         
             
 class DraggableLabel(QtWidgets.QLabel):

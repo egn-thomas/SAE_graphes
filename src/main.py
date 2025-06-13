@@ -26,8 +26,6 @@ def lancer_application_depuis_connexion(app):
             else:
                 break
         else:
-
-
             break
 
 def main():
