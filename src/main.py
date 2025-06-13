@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QDialog
 from controllerAdmin import MagasinController
 from controllerClient import ClientController
 from login import PageConnexion
@@ -7,27 +7,27 @@ from login import PageConnexion
 def lancer_application_depuis_connexion(app):
     while True:
         connexion = PageConnexion()
-        if connexion.exec():
+      
+        result = connexion.exec()  
+
+        if result == QDialog.DialogCode.Accepted:
             role = connexion.get_infos_connexion()
             if role == "admin":
                 controller = MagasinController()
-                controller.vue.show()
-                app.exec()
-                if controller.retour_connexion:
-                    continue
-                else:
-                    break
             elif role == "client":
                 controller = ClientController()
-                controller.vue.show()
-                app.exec()
-                if controller.retour_connection:
-                    continue
-                else:
-                    break
-            else : 
+            else:
+                print("Rôle inconnu.")
+                continue
+            controller.vue.show()
+            app.exec()
+            if getattr(controller, "retour_connexion", False):
+                continue
+            else:
                 break
         else:
+
+
             break
 
 def main():
@@ -37,4 +37,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
