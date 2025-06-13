@@ -87,7 +87,7 @@ class PageConnexion(QDialog):
                 # Récupération du rôle, si présent, et fermeture de la fenêtre de connexion
                 self.role = utilisateur.get("role")
                 self.accept()  # Connexion réussie
-                print("conexion réussie")
+                print("connexion réussie")
                 return
             else :
                 QMessageBox.critical(self,"Erreur de connexion","Identifiant ou mot de passe incorrect")
