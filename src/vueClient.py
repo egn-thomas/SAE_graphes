@@ -1,17 +1,15 @@
 from graphe import Graphe
 from droparea import DropArea
 from modelClient import ClientModel
-
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QFileDialog
-
+from PyQt6.QtWidgets import QFileDialog, QFrame
 from collections import Counter
 import os
 import csv
 
 class VueClient(QtWidgets.QWidget):
-    """Vue principale de l'interface administrateur"""
+    """Vue principale de l'interface client héritant de VueGraphe"""
     
     # Signaux pour communiquer avec le contrôleur
     categorie_cliquee = QtCore.pyqtSignal(str)
@@ -26,20 +24,32 @@ class VueClient(QtWidgets.QWidget):
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
-        super(VueClient, self).__init__()
+        super().__init__()  # Appelle correctement le constructeur parent
+        
         self.setWindowTitle("Parcours d'un magasin")
         self.setGeometry(200, 200, 1600, 1200)
         
+        # Variables d'instance
+        self.position_actuelle = (37, 3)
+        self.liste_courses = []
+        
+        # Création de l'interface
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
+        # Créer les composants de l'interface
         self.create_partie_gauche()
         self.create_partie_droite()
         
+        # Connexions des signaux
+        self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
-
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
+
+        # Marquer l'entrée une fois que tout est initialisé
+        if self.graphe and self.position_actuelle in self.graphe.cellules_graphiques:
+            self.graphe.cellules_graphiques[self.position_actuelle].marquer_comme_entree()
     
     
     def initialiser_sauvegarde(self):
@@ -360,6 +370,77 @@ class VueClient(QtWidgets.QWidget):
         
         self.cellules_grille = {}
         self.create_grille(52, 35)
+
+    def colorier_cellule_en_orange(self, ligne, colonne):
+        """Colorie une cellule graphique DropArea en orange à partir de ses coordonnées."""
+        cellule = self.cellules_grille.get((ligne, colonne))
+        if cellule:
+            cellule.setStyleSheet("""
+                background-color: orange;
+                border: 2px solid black;
+            """)
+        else:
+            print(f"[AVERTISSEMENT] Cellule ({ligne}, {colonne}) introuvable dans la grille.")
+    
+    def create_grille(self, rows, cols):
+        """Crée la grille de cellules interactives"""
+        # Nettoyer l'ancienne grille
+        for cellule in self.cellules_grille.values():
+            cellule.deleteLater()
+        self.cellules_grille.clear()
+        
+        model = MagasinModel()
+        cases_colorees = model.analyser_image(52, 35)
+        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
+        self.graphe.afficher_grille(self.labels_grille, self.cellules_grille)
+        # Marquer l'entrée
+        if self.position_actuelle in self.graphe.cellules_graphiques:
+            self.graphe.cellules_graphiques[self.position_actuelle].marquer_comme_entree()
+    
+    def effacer_projet(self):
+        """
+        Réinitialise le fichier '../magasins/sauvegarde_rapide.csv', vide le contenu
+        de toutes les cellules de la grille, efface le nom du projet dans le widget
+        et supprime la popup active,
+        """
+        try:
+            # Réinitialisation du CSV (en gardant l'en-tête)
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+            print("Fichier CSV réinitialisé avec succès.")
+        except Exception as e:
+            print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
+
+        # Effacer le contenu visuel de toutes les cellules de la grille (DropArea)
+        for cell in self.labels_grille.findChildren(DropArea):
+            cell.setText("")
+            cell.setStyleSheet(cell.default_style)
+            cell.articles = []  # Réinitialiser le contenu interne
+
+        # Effacer le nom du projet affiché dans le widget
+        self.nom_magasin.setText("")
+
+        # Supprimer la popup active, si elle existe
+        if hasattr(self, "popup_actuelle") and self.popup_actuelle:
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
+            self.popup_actuelle = None
+
+        print("Contenu du projet, nom affiché et pop-up effacés. L'application reste ouverte.")
+    
+    def connecter_signaux(self):
+        """Connecte les signaux internes"""
+        self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
+        self.bouton_effacer.clicked.connect(self.effacer_projet)
+        self.bouton_ouvrir.clicked.connect(self.charger_csv)
+        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
+        self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
+
+    def fermer_et_connexion(self):
+        self.deconnecter_signal.emit()
 
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""

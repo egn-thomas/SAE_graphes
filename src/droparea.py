@@ -146,3 +146,15 @@ class DropArea(QLabel):
             self.setText(None)
         else:
             self.setStyleSheet(self.filled_style)
+    
+    def marquer_comme_entree(self):
+        """Marque la cellule comme entrée du magasin"""
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #66b366;
+                border: 2px solid #006400;
+                border-radius: 2px;
+            }
+        """)
+    
+    
