@@ -91,8 +91,8 @@ class VueClient(QtWidgets.QWidget):
                         produits_csv.append(row)
                 
   
-                new_cols = max_col 
-                new_rows = max_row 
+                new_cols = max_col +1
+                new_rows = max_row +1
                 print(f"Mise à jour du quadrillage avec {new_rows} lignes et {new_cols} colonnes")
                 
                 # Met à jour le quadrillage avec les nouvelles dimensions issues du CSV
