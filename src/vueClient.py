@@ -108,8 +108,8 @@ class VueClient(QtWidgets.QWidget):
         # Section du tableau de bord
         self.create_panier()
         
-        layout.addWidget(self.liste_articles, stretch=1)
-        layout.addWidget(self.panier, stretch=1)
+        layout.addWidget(self.liste_articles, stretch=3)
+        layout.addWidget(self.panier, stretch=2)
         
         self.layout.addWidget(self.partie_gauche, stretch=1)
     
