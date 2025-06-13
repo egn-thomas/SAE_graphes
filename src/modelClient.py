@@ -4,9 +4,10 @@ import csv
 import numpy as np
 from graphe import Graphe
 import listeProduit as lp
+from listeProduit import CsvLoader
 
 
-class MagasinModel:
+class ClientModel:
     """Gère les données du magasin"""
     def __init__(self):
         self.nom_magasin = ""
@@ -63,23 +64,22 @@ class MagasinModel:
         cellule = self.graphe.get_cellule(ligne, colonne)
         return cellule.contenu if cellule else []
     
-    def charger_produits(self, csv_path=None):
+    def charger_produits(self,  nom_fichier, nom_magasin, csv_path=None):
         """Charge les produits depuis le CSV"""
         if csv_path is None:
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            csv_path = os.path.join(script_dir, "..", "liste_produits.csv")
-            
+            csv_path = os.path.join(script_dir, "..", nom_fichier)
         try:
-            self._charger_et_organiser_produits(csv_path)
+            self._charger_et_organiser_produits(csv_path, nom_magasin)
             return True
         except FileNotFoundError as e:
             print(f"Erreur : fichier non trouvé à {csv_path} -> {e}")
             return False
 
-    def _charger_et_organiser_produits(self, csv_path):
+    def _charger_et_organiser_produits(self, csv_path, magasin):
         """Charge et organise les produits par catégorie"""
-        loader = lp.CsvLoader(csv_path)
-        produits = loader.extract_all()
+        loader = CsvLoader(csv_path)
+        produits = loader.extraire_articles_par_categorie(magasin, "../liste_produits.csv")
         
         self.categories = produits[0]
         self.liste_produits = [dict(zip(self.categories, row)) for row in produits[1:]]
