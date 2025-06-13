@@ -98,43 +98,50 @@ class DropArea(QLabel):
             
     def enregistrer_produit(self, produit):
         """
-        Enregistre le produit déposé dans le CSV avec les coordonnées formatées.
-        Si le fichier CSV n'existe pas ou est vide, il est initialisé avec un en-tête incluant la colonne 'Nom du projet'.
+        Enregistre le produit déposé dans le CSV "disposition_magasin.csv" en ajoutant
+        les coordonnées (X, Y) formatées et le nombre de colonnes et de lignes du tableau de bord.
+        
+        L'en-tête du CSV est constitué de :
+        Nom du projet, Nom du produit, X, Y, Position, Colonnes, Lignes
         """
         try:
             # Récupérer le nom du projet depuis la vue administrateur, si disponible
             if hasattr(self, "vue_admin") and self.vue_admin is not None:
-                nom_projet = self.vue_admin.nom_magasin.text()
-                if not nom_projet:
-                    nom_projet = ""
+                nom_projet = self.vue_admin.nom_magasin.text().strip()
             else:
                 nom_projet = ""
-        
-           
-            x = self.colonne
-            y = str(self.ligne)
+            
+            # Coordonnées de position (assurez-vous que self.colonne et self.ligne sont bien définis et mis à jour)
+            x = self.colonne  
+            y = self.ligne  
             coord_formatee = f"{x}{y}"
 
+            colonnes_visibles = self.vue_admin.spinTableauBordColonnes.value()
+            lignes_visibles = self.vue_admin.spinTableauBordLignes.value()
+            
             script_dir = os.path.dirname(os.path.abspath(__file__))
             chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             file_path = chemin
-            header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+            header = ["Nom du projet", "Nom du produit", "X", "Y", "Position", "Colonnes", "Lignes"]
 
             # Vérifier si le fichier existe et déterminer s'il est vide
-            file_exists = os.path.exists(file_path)
-            file_empty = not file_exists or os.stat(file_path).st_size == 0
 
+
+            file_exists = os.path.exists(file_path)
+            file_empty = (not file_exists) or (os.stat(file_path).st_size == 0)
+            
             with open(file_path, "a", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                # S'il est vide, écrire l'en-tête
+                # Si le fichier est nouveau ou vide, écrire l'en-tête
                 if file_empty:
                     writer.writerow(header)
-                # Écriture de la ligne contenant le nom du projet et le produit
-                writer.writerow([nom_projet, produit, x, y, coord_formatee])
-
+                # Écriture de la ligne avec le nom du projet, le produit, la position et la configuration du tableau de bord
+                writer.writerow([nom_projet, produit, x, y, coord_formatee, colonnes_visibles, lignes_visibles])
+                print("Produit enregistré avec succès dans le CSV.")
+        
         except Exception as e:
-            print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
-            
+            print(f"[ERREUR] lors de l'enregistrement du produit {produit}: {e}")
+
     def mettre_a_jour_apparence(self):
         if not hasattr(self, "articles") or not self.articles:
             self.setStyleSheet(self.default_style)
