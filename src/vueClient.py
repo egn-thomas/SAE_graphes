@@ -62,6 +62,7 @@ class VueClient(QtWidgets.QWidget):
             )
 
         if fichier:
+            self.ouvrir_signal.emit(fichier)
             try:
                 max_col = 0
                 max_row = 0
