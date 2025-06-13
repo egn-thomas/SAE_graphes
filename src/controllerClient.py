@@ -2,6 +2,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QObject
 from modelClient import ClientModel
 from vueClient import VueClient
+from graphe import VueGraphe
 from login import PageConnexion
 
 
@@ -13,6 +14,8 @@ class ClientController(QObject):
         self.vue = VueClient()
         self.model = ClientModel()
         self.model.parent = self.vue
+        self.vue_graphe = VueGraphe()
+        self.position_depart = (37, 3)  # Position de départ fixe
         self.categorie_courante = None
         self.retour_connexion = False
         self.connecter_signaux()
@@ -34,9 +37,10 @@ class ClientController(QObject):
         """Initialise l'application avec les données de base"""
 
     def ajouter_au_panier(self, nom_produit):
-        """ajoute le produit correspondant au panier"""
+        """ajoute le produit correspondant au panier et recalcule le chemin"""
         self.vue.ajouter_produit(nom_produit)
         self.model.ajouter_produit(nom_produit)
+        self.vue_graphe.recalculer_chemin_automatique()
 
     def ouvrir_magasin(self, fichier):
         """ouvre un magazin pour remplir la liste"""

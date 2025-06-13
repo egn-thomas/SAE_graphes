@@ -1,17 +1,16 @@
-from graphe import Graphe
+from graphe import VueGraphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
-
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QFileDialog
-
+from PyQt6.QtWidgets import QFileDialog, QFrame
+from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont
 from collections import Counter
 import os
 import csv
 
-class VueClient(QtWidgets.QWidget):
-    """Vue principale de l'interface administrateur"""
+class VueClient(VueGraphe):
+    """Vue principale de l'interface client héritant de VueGraphe"""
     
     # Signaux pour communiquer avec le contrôleur
     categorie_cliquee = QtCore.pyqtSignal(str)
@@ -25,21 +24,32 @@ class VueClient(QtWidgets.QWidget):
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
-        super(VueClient, self).__init__()
+        super().__init__()  # Appelle correctement le constructeur parent
+        
         self.setWindowTitle("Parcours d'un magasin")
         self.setGeometry(200, 200, 1600, 1200)
         
+        # Variables d'instance
+        self.position_actuelle = (37, 3)
+        self.liste_courses = []
+        
+        # Création de l'interface
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
+        # Créer les composants de l'interface
         self.create_partie_gauche()
         self.create_partie_droite()
         
+        # Connexions des signaux
         self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
-
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
+
+        # Marquer l'entrée une fois que tout est initialisé
+        if self.graphe and self.position_actuelle in self.graphe.cellules_graphiques:
+            self.graphe.cellules_graphiques[self.position_actuelle].marquer_comme_entree()
     
     
     def initialiser_sauvegarde(self):
@@ -333,15 +343,14 @@ class VueClient(QtWidgets.QWidget):
         self.cellules_grille.clear()
         
         model = MagasinModel()
-        cases_colorees = model.analyser_image(rows, cols)
-        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
+        cases_colorees = model.analyser_image(52, 35)  # Dimensions fixes
+        self.graphe = Graphe(52, 35, cases_colorees, parent=self.labels_grille)
         self.graphe.afficher_grille(self.labels_grille)
         
-        for (i, j), drop_area in self.graphe.cellules_graphiques.items():
-            drop_area.placer_produit.connect(self.on_placer_produit)
-            drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
-            self.cellules_grille[(i, j)] = drop_area
-            
+        # Marquer l'entrée
+        if self.position_actuelle in self.graphe.cellules_graphiques:
+            self.graphe.cellules_graphiques[self.position_actuelle].marquer_comme_entree()
+    
     def effacer_projet(self):
         """
         Réinitialise le fichier '../magasins/sauvegarde_rapide.csv', vide le contenu
@@ -534,6 +543,9 @@ class VueClient(QtWidgets.QWidget):
         except Exception as e:
             print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
         
+    def recalculer_chemin(self):
+        """Appelle la méthode de la classe parente"""
+        super().recalculer_chemin_automatique()
             
 class DraggableLabel(QtWidgets.QLabel):
     """Label draggable pour les produits"""

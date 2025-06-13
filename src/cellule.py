@@ -38,3 +38,21 @@ class Cellule:
     def est_voisin(self, autre_cellule):
         """Vérifie si deux cellules sont voisines"""
         return autre_cellule in self.voisins
+    
+    def marquer_comme_entree(self):
+        """Marque la cellule comme entrée du magasin"""
+        self.setStyleSheet("background-color: #90EE90; border: 2px solid #006400;")
+    
+    def reinitialiser(self):
+        """Remet la cellule à son état initial (sauf si c'est un produit ou l'entrée)"""
+        self.est_chemin = False
+        self.numero_ordre = None
+        
+        if self.est_produit:
+            # Remettre la couleur du produit
+            self.setStyleSheet("background-color: #FFD700; border: 2px solid #FFA500;")
+        elif self.x == 0 and self.y == 0:  # Entrée
+            self.marquer_comme_entree()
+        else:
+            # Remettre la couleur originale
+            self.setStyleSheet(f"background-color: {self.couleur_originale}; border: 1px solid #cccccc;")

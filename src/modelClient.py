@@ -26,6 +26,8 @@ class ClientModel:
         self.parent = None
         self.initialiser_graphe()
 
+        self.position_actuelle = (37, 3)
+
     def initialiser_graphe(self):
         """Initialise le graphe du magasin"""
         self.graphe = Graphe(self.nb_lignes, self.nb_colonnes, self.cases_rayon, self.parent)
