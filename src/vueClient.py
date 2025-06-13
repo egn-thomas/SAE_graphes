@@ -1,15 +1,14 @@
-from graphe import VueGraphe
+from graphe import Graphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
 from PyQt6 import QtCore, QtWidgets, QtGui
 from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtWidgets import QFileDialog, QFrame
-from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont
 from collections import Counter
 import os
 import csv
 
-class VueClient(VueGraphe):
+class VueClient(QtWidgets.QWidget):
     """Vue principale de l'interface client héritant de VueGraphe"""
     
     # Signaux pour communiquer avec le contrôleur
@@ -334,6 +333,17 @@ class VueClient(VueGraphe):
         
         self.cellules_grille = {}
         self.create_grille(52, 35)
+
+    def colorier_cellule_en_orange(self, ligne, colonne):
+        """Colorie une cellule graphique DropArea en orange à partir de ses coordonnées."""
+        cellule = self.cellules_grille.get((ligne, colonne))
+        if cellule:
+            cellule.setStyleSheet("""
+                background-color: orange;
+                border: 2px solid black;
+            """)
+        else:
+            print(f"[AVERTISSEMENT] Cellule ({ligne}, {colonne}) introuvable dans la grille.")
     
     def create_grille(self, rows, cols):
         """Crée la grille de cellules interactives"""
@@ -343,10 +353,9 @@ class VueClient(VueGraphe):
         self.cellules_grille.clear()
         
         model = MagasinModel()
-        cases_colorees = model.analyser_image(52, 35)  # Dimensions fixes
-        self.graphe = Graphe(52, 35, cases_colorees, parent=self.labels_grille)
-        self.graphe.afficher_grille(self.labels_grille)
-        
+        cases_colorees = model.analyser_image(52, 35)
+        self.graphe = Graphe(rows, cols, cases_colorees, parent=self.labels_grille)
+        self.graphe.afficher_grille(self.labels_grille, self.cellules_grille)
         # Marquer l'entrée
         if self.position_actuelle in self.graphe.cellules_graphiques:
             self.graphe.cellules_graphiques[self.position_actuelle].marquer_comme_entree()

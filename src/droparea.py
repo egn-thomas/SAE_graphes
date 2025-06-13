@@ -151,3 +151,5 @@ class DropArea(QLabel):
                 border-radius: 2px;
             }
         """)
+    
+    

@@ -28,6 +28,9 @@ class Cellule:
         """Définit la position de la cellule"""
         self.position = (ligne, colonne)
 
+    def get_position(self):
+        return self.position
+
     def ajouter_voisin(self, cellule):
         """Ajoute une cellule voisine"""
         if cellule not in self.voisins:

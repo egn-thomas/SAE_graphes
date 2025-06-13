@@ -2,7 +2,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QObject
 from modelClient import ClientModel
 from vueClient import VueClient
-from graphe import VueGraphe
+from graphe import Graphe
 from login import PageConnexion
 
 
@@ -13,9 +13,10 @@ class ClientController(QObject):
         super().__init__()
         self.vue = VueClient()
         self.model = ClientModel()
+        self.graphe = Graphe(35, 52, self.model.cases_rayon)
+        self.articles = {}
+        self.chemin_rapide = []
         self.model.parent = self.vue
-        self.vue_graphe = VueGraphe()
-        self.position_depart = (37, 3)  # Position de départ fixe
         self.categorie_courante = None
         self.retour_connexion = False
         self.connecter_signaux()
@@ -40,12 +41,16 @@ class ClientController(QObject):
         """ajoute le produit correspondant au panier et recalcule le chemin"""
         self.vue.ajouter_produit(nom_produit)
         self.model.ajouter_produit(nom_produit)
-        self.vue_graphe.recalculer_chemin_automatique()
+        self.chemin_rapide = self.graphe.generer_chemin_complet(self.model.liste_panier, position_depart=(4,38))
+        print (self.chemin_rapide)
+        for (i, j) in self.chemin_rapide:
+            self.vue.colorier_cellule_en_orange(i, j)
 
     def ouvrir_magasin(self, fichier):
         """ouvre un magazin pour remplir la liste"""
         if self.model.charger_produits("liste_produits.csv", fichier):
             self.vue.afficher_categories(self.model.produits_par_categorie.keys())
+            self.articles = self.graphe.charger_catalogue_depuis_csv(fichier)
         else:
             print(f"Échec du chargement du fichier : {fichier}")
 
