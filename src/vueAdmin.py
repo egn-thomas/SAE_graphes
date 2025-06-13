@@ -649,6 +649,7 @@ class VueAdmin(QtWidgets.QWidget):
             "disposition_magasin.csv",  # nom par défaut
             "Fichiers CSV (*.csv);;Tous les fichiers (*)"
         )
+        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position", "Colonnes", "Lignes"]
 
 
         # Si l'utilisateur annule, on quitte la méthode

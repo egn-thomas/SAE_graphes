@@ -53,13 +53,54 @@ class VueClient(QtWidgets.QWidget):
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
     def charger_csv(self):
+        """
+        Charge un fichier CSV et met à jour directement le quadrillage
+        en utilisant les coordonnées (X et Y) présentes dans le CSV.
+        
+
+        """
         fichier, _ = QFileDialog.getOpenFileName(
-            parent=None,
+            parent=self,
             caption="Choisir un fichier CSV",
             filter="Fichiers CSV (*.csv);;Tous les fichiers (*)"
         )
+        
         if fichier:
-            self.ouvrir_signal.emit(fichier)
+            try:
+                max_col = 0
+                max_row = 0
+                produits_csv = []  # Pour stocker les lignes de données
+                with open(fichier, newline='', encoding='utf-8') as csvfile:
+                    reader = csv.reader(csvfile, delimiter=';')
+                    # Lecture de l'en-tête (si présent)
+                    header = next(reader, None)
+                    # Parcours des lignes de données
+                    for row in reader:
+                        if len(row) < 4:
+                            # Ignorer les lignes incomplètes
+                            continue
+                        try:
+                            # On attend que les colonnes 2 et 3 contiennent X et Y
+                            x = int(row[2])
+                            y = int(row[3])
+                        except Exception as e:
+                            print("Erreur de conversion dans la ligne :", row, e)
+                            continue
+                        max_col = max(max_col, x)
+                        max_row = max(max_row, y)
+                        produits_csv.append(row)
+                
+  
+                new_cols = max_col 
+                new_rows = max_row 
+                print(f"Mise à jour du quadrillage avec {new_rows} lignes et {new_cols} colonnes")
+                
+                # Met à jour le quadrillage avec les nouvelles dimensions issues du CSV
+                self.mettre_a_jour_grille(new_rows, new_cols)
+
+                self.ouvrir_signal.emit(fichier)
+            except Exception as e:
+                print("Erreur lors du chargement du CSV :", e)
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
