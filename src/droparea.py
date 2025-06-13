@@ -15,6 +15,7 @@ class DropArea(QLabel):
         self.setAcceptDrops(True)
         
         self.est_rayon = False
+        self.articles = []
         
         self.default_style = """
             background-color: transparent;
@@ -44,6 +45,8 @@ class DropArea(QLabel):
 
     def lier_cellule(self, cellule):
         self.est_rayon = cellule.est_rayon
+        if hasattr(cellule, 'articles'):
+            self.articles = cellule.articles.copy()
 
     def enterEvent(self, event):
         """Appelé quand la souris entre dans la zone"""
@@ -157,5 +160,4 @@ class DropArea(QLabel):
                 border-radius: 2px;
             }
         """)
-    
-    
+
