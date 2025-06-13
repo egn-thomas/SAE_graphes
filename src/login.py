@@ -32,13 +32,6 @@ class PageConnexion(QDialog):
             self.ouvrir_vue_client()
         else:
             self.label.setText("Identifiant inconnu")
-    
-    def ouvrir_vue_admin(self):
-        self.vue_admin = VueAdmin()
-        self.vue_admin.show()
-        self.close()
-    
-    def ouvrir_vue_client(self):
-        self.vue_client = VueClient()
-        self.vue_client.show()
-        self.close()
+
+    def get_infos_connexion(self):
+        return self.role

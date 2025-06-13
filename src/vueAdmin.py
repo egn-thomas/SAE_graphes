@@ -24,7 +24,7 @@ class VueAdmin(QtWidgets.QWidget):
     recherche_changee = QtCore.pyqtSignal(str)
     sauvegarder_signal = QtCore.pyqtSignal()
     bouton_popup_signal = QtCore.pyqtSignal(int, int, str)
-    deconnecter_signal = QtCore.pyqtSignal()
+    deconnexion_signal = QtCore.pyqtSignal()
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -41,9 +41,6 @@ class VueAdmin(QtWidgets.QWidget):
         self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
 
-        
-        
-        
          # Initialiser le fichier de sauvegarde s'il n'existe pas.
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
@@ -404,11 +401,13 @@ class VueAdmin(QtWidgets.QWidget):
         
         legend_layout2.addWidget(legend_color2)
         legend_layout2.addWidget(legend_label2)
+
+        bouton_deconnection = QtWidgets.QPushButton("Se déconnecter")
+        bouton_deconnection.clicked.connect(self.on_bouton_deconnection)
         
         layout_header.addWidget(legend_container1)
         layout_header.addWidget(legend_container2)
         layout_header.addWidget(bouton_deconnection)
-
         
         # Zone du plan avec grille
         self.create_zone_plan()
@@ -416,6 +415,10 @@ class VueAdmin(QtWidgets.QWidget):
         layout.addWidget(header, alignment=QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.zone_superposee, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.partie_droite, stretch=1)
+    
+    def on_bouton_deconnection(self):
+        """emmet le signal de deconnexion"""
+        self.deconnexion_signal.emit()
     
     def create_zone_plan(self):
         """Crée la zone du plan avec la grille interactive"""

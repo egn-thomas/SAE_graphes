@@ -14,6 +14,7 @@ class MagasinController(QObject):
         self.model = MagasinModel()
         self.model.parent = self.vue
         self.categorie_courante = None
+        self.retour_connexion = False
         self.connecter_signaux()
         self.initialiser()
     
@@ -21,9 +22,7 @@ class MagasinController(QObject):
         """Connecte les signaux de la vue aux méthodes du contrôleur"""
         self.vue.bouton_effacer.clicked.connect(self.effacer_projet)
         self.vue.nom_magasin.textChanged.connect(self.mise_a_jour_nom_magasin)
-        
         self.vue.recherche_articles.textChanged.connect(self.filtrer_produits)
-        
         self.vue.categorie_cliquee.connect(self.afficher_produits_categorie)
         self.vue.retour_categories.connect(self.afficher_categories)
         self.vue.placer_produit.connect(self.placer_produit)
@@ -32,7 +31,7 @@ class MagasinController(QObject):
         self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
         self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
         self.vue.bouton_popup_signal.connect(self.supprimer_article)
-        self.vue.deconnecter_signal.connect(self.deconnecter)
+        self.vue.deconnexion_signal.connect(self.deconnecter)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -45,11 +44,11 @@ class MagasinController(QObject):
         print(f"[CONTROLLER] Suppression de {produit} à ({ligne}, {colonne}) demandée")
         self.model.effacer_element_grille(ligne, colonne, produit)
         self.vue.supprimer_article_cellule(ligne, colonne, produit)
-    
+
     def deconnecter(self):
+        print("[DEBUG] : deconnexion demandée")
+        self.retour_connexion = True
         self.vue.close()
-        self.connexion = PageConnexion()
-        self.connexion.show()
 
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
