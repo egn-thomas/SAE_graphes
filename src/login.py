@@ -87,7 +87,7 @@ class PageConnexion(QDialog):
                 # Récupération du rôle, si présent, et fermeture de la fenêtre de connexion
                 self.role = utilisateur.get("role")
                 self.accept()  # Connexion réussie
-                print("conexxion réussie")
+                print("conexion réussie")
                 return
 
         else :
