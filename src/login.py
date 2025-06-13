@@ -26,10 +26,13 @@ class PageConnexion(QDialog):
 
     def verifier_identifiant(self):
         identifiant = self.identifiant_input.text().strip().lower()
+
         if identifiant == "admin":
-            self.ouvrir_vue_admin()
+            self.role = "admin"
+            self.accept()  # Ferme le QDialog et renvoie QDialog.Accepted
         elif identifiant == "client":
-            self.ouvrir_vue_client()
+            self.role = "client"
+            self.accept()
         else:
             self.label.setText("Identifiant inconnu")
 
