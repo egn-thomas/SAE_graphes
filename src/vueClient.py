@@ -22,6 +22,7 @@ class VueClient(QtWidgets.QWidget):
     deconnexion_signal = QtCore.pyqtSignal()
     ouvrir_signal = QtCore.pyqtSignal(str)
     produit_signal = QtCore.pyqtSignal(str)
+    enlever_produit_signal = QtCore.pyqtSignal(str)
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
@@ -463,9 +464,34 @@ class VueClient(QtWidgets.QWidget):
             self.produit_signal.emit(texte_produit)
 
     def ajouter_produit(self, nom_produit):
+        """ajoute un produit au panier"""
         btn = QtWidgets.QPushButton(nom_produit)
+        btn.clicked.connect(lambda checked: self.enlever_produit_panier())
         self.layout_panier.addWidget(btn)
+
+    def enlever_produit_panier(self):
+        """emmet le signal de suppression"""
+        bouton_clique = self.sender()
+        if isinstance(bouton_clique, QtWidgets.QPushButton):
+            texte_produit = bouton_clique.text()
+            print(f"[DEBUG] Émission du signal avec : '{texte_produit}' (type: {type(texte_produit)})")
+            self.enlever_produit_signal.emit(texte_produit)
+    
+    def enlever_produit(self, nom_produit):
+        """Méthode pour enlever un produit par son nom"""
+        print(f"[DEBUG] Signal reçu : '{nom_produit}' (type: {type(nom_produit)})")
         
+        for i in range(self.layout_panier.count() - 1, -1, -1):
+            item = self.layout_panier.itemAt(i)
+            if item:
+                widget = item.widget()
+                if isinstance(widget, QtWidgets.QPushButton) and widget.text() == nom_produit:
+                    print(f"[DEBUG] Widget trouvé, suppression...")
+                    self.layout_panier.removeWidget(widget)
+                    widget.deleteLater()
+                    return
+        
+        print(f"[DEBUG] Aucun widget trouvé avec le nom '{nom_produit}'")
     
     def clear_layout(self, layout):
         """Vide un layout de tous ses widgets"""

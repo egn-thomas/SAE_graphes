@@ -35,6 +35,13 @@ class ClientModel:
         """ajoute le produit a la liste"""
         self.liste_panier.append(nom_produit)
         print (self.liste_panier)
+
+    def enlever_produit(self, nom_produit):
+        """supprime un produit de la liste"""
+        for produit in self.liste_panier:
+            if produit == nom_produit:
+                self.liste_panier.remove(produit)
+        print (self.liste_panier)
     
     def effacer_element_grille(self, ligne, colonne, produit):
         """Supprime un élément spécifique du CSV en fonction de la ligne, colonne et produit."""
