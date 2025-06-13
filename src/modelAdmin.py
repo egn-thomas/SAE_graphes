@@ -33,7 +33,9 @@ class MagasinModel:
         """Supprime un élément spécifique du CSV en fonction de la ligne, colonne et produit."""
         print(f"[MODÈLE] Suppression de {produit} à ({ligne}, {colonne})")
         lignes_conservees = []
-        with open("../magasins/sauvegarde_rapide.csv", "r", newline='', encoding="utf-8") as csvfile:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+        with open(chemin, "r", newline='', encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, delimiter=';')
             for lignecsv in reader:
                 if lignecsv == ["Nom du projet", "Nom du produit", "X", "Y", "Position"]:
@@ -48,7 +50,7 @@ class MagasinModel:
                 else:
                     lignes_conservees.append(lignecsv)
         
-        with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
+        with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerows(lignes_conservees)
 

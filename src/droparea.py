@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QLabel
 from PyQt6.QtCore import pyqtSignal, Qt
 import csv
 import time
+import os
 
 class DropArea(QLabel):
     placer_produit = pyqtSignal(int, int, str)
@@ -114,8 +115,9 @@ class DropArea(QLabel):
             y = str(self.ligne)
             coord_formatee = f"{x}{y}"
 
-            import os
-            file_path = "../magasins/sauvegarde_rapide.csv"
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+            file_path = chemin
             header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
             # Vérifier si le fichier existe et déterminer s'il est vide

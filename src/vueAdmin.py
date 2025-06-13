@@ -48,8 +48,11 @@ class VueAdmin(QtWidgets.QWidget):
     
     def initialiser_sauvegarde(self):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
-        if not os.path.exists("../magasins/sauvegarde_rapide.csv"):
-            with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
+        
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+        if not os.path.exists(chemin):
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
@@ -125,8 +128,10 @@ class VueAdmin(QtWidgets.QWidget):
         """
         try:
             # Si le fichier existe, on le lit
-            if os.path.exists("../magasins/sauvegarde_rapide.csv"):
-                with open("../magasins/sauvegarde_rapide.csv", "r", newline='', encoding="utf-8") as csvfile:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+            if os.path.exists(chemin):
+                with open(chemin, "r", newline='', encoding="utf-8") as csvfile:
                     reader = csv.reader(csvfile, delimiter=';')
                     lignes = list(reader)
 
@@ -141,7 +146,7 @@ class VueAdmin(QtWidgets.QWidget):
                     nouvelles_lignes.append(ligne)
 
         # Réécriture du fichier CSV avec les nouvelles valeurs
-            with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerows(nouvelles_lignes)
 
@@ -472,7 +477,9 @@ class VueAdmin(QtWidgets.QWidget):
         """
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
-            with open("../magasins/sauvegarde_rapide.csv", "w", newline='', encoding="utf-8") as csvfile:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
             print("Fichier CSV réinitialisé avec succès.")
