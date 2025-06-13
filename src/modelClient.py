@@ -79,7 +79,9 @@ class ClientModel:
     def _charger_et_organiser_produits(self, csv_path, magasin):
         """Charge et organise les produits par catégorie"""
         loader = CsvLoader(csv_path)
-        produits = loader.extraire_articles_par_categorie(magasin, "../liste_produits.csv")
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin = os.path.join(script_dir, "..", "liste_produits.csv")
+        produits = loader.extraire_articles_par_categorie(magasin, chemin)
         
         self.categories = produits[0]
         self.liste_produits = [dict(zip(self.categories, row)) for row in produits[1:]]
