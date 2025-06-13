@@ -1,9 +1,12 @@
-from PyQt6 import QtCore, QtWidgets, QtGui
-from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QFileDialog
 from graphe import Graphe
 from droparea import DropArea
 from modelAdmin import MagasinModel
+
+from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtWidgets import QFileDialog
+
+from collections import Counter
 import os
 import csv
 
@@ -12,187 +15,144 @@ class VueClient(QtWidgets.QWidget):
     
     # Signaux pour communiquer avec le contrôleur
     categorie_cliquee = QtCore.pyqtSignal(str)
-    produit_ajoute = QtCore.pyqtSignal(str)
     retour_categories = QtCore.pyqtSignal()
-    cellule_cliquee = QtCore.pyqtSignal(int, int)
-    dimensions_changees = QtCore.pyqtSignal(int, int)  # colonnes, lignes
     nom_magasin_change = QtCore.pyqtSignal(str)
-    placer_produit = QtCore.pyqtSignal(int, int, str)  # ligne, colonne, produit
     recherche_changee = QtCore.pyqtSignal(str)
+    sauvegarder_signal = QtCore.pyqtSignal()
+    deconnexion_signal = QtCore.pyqtSignal()
+    ouvrir_signal = QtCore.pyqtSignal()
 
     def __init__(self):
         """Initialise l'interface utilisateur"""
         super(VueClient, self).__init__()
-        self.setWindowTitle("Créateur de magazin Administrateur")
+        self.setWindowTitle("Parcours d'un magasin")
         self.setGeometry(200, 200, 1600, 1200)
         
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         
-        # Dictionnaire pour stocker la liste de courses organisée par catégories
-        self.liste_courses = {}
-        # Mapping des produits vers leurs catégories
-        self.produits_categories = {}
-        
         self.create_partie_gauche()
         self.create_partie_droite()
         
+        self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
         self.connecter_signaux()
 
+        self.initialiser_sauvegarde()
         self.popup_actuelle = None
     
-    def definir_categories_produits(self, categories_produits):
-        """Définit le mapping entre produits et catégories"""
-        self.produits_categories.clear()
-        for categorie, produits in categories_produits.items():
-            for produit in produits:
-                self.produits_categories[produit] = categorie
     
-    def ajouter_a_liste_courses(self, produit):
-        """Ajoute un produit à la liste de courses, organisé par catégorie"""
-        if produit in self.produits_categories:
-            categorie = self.produits_categories[produit]
-            
-            if categorie not in self.liste_courses:
-                self.liste_courses[categorie] = []
-            
-            if produit not in self.liste_courses[categorie]:
-                self.liste_courses[categorie].append(produit)
-                self.mettre_a_jour_affichage_liste_courses()
+    def initialiser_sauvegarde(self):
+        """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
+        if not os.path.exists(chemin):
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+
+    def charger_csv(self):
+        self.ouvrir_signal.emit()
+
+    def maj_nom_projet_csv(self, nouveau_nom):
+        """
+        Met à jour le CSV '../magasins/sauvegarde_rapide.csv' en modifiant la première colonne (Nom du projet)
+        pour toutes les lignes, et ce en temps réel à chaque modification.
+        """
+        try:
+            # Si le fichier existe, on le lit
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
+            if os.path.exists(chemin):
+                with open(chemin, "r", newline='', encoding="utf-8") as csvfile:
+                    reader = csv.reader(csvfile, delimiter=';')
+                    lignes = list(reader)
+
+            # Vérifier que le fichier contient au moins une ligne (l'en-tête)
+            if len(lignes) > 0:
+                en_tete = lignes[0]
+                nouvelles_lignes = [en_tete]
+                for ligne in lignes[1:]:
+                    if len(ligne) >= 1:
+                        ligne[0] = nouveau_nom
+                    nouvelles_lignes.append(ligne)
+
+        # Réécriture du fichier CSV avec les nouvelles valeurs
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerows(nouvelles_lignes)
+
+        except Exception as e:
+            print(f"[ERREUR] Lors de la mise à jour du CSV: {e}")
     
-    def retirer_de_liste_courses(self, produit, categorie):
-        """Retire un produit de la liste de courses"""
-        if categorie in self.liste_courses and produit in self.liste_courses[categorie]:
-            self.liste_courses[categorie].remove(produit)
-            if not self.liste_courses[categorie]:  # Si la catégorie est vide
-                del self.liste_courses[categorie]
-            self.mettre_a_jour_affichage_liste_courses()
-    
-    def mettre_a_jour_affichage_liste_courses(self):
-        """Met à jour l'affichage de la liste de courses"""
-        # Vider le widget actuel
-        self.clear_layout(self.layout_liste_courses)
-        
-        if not self.liste_courses:
-            label_vide = QtWidgets.QLabel("Liste de courses vide\nCliquez sur un produit pour l'ajouter")
-            label_vide.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-            label_vide.setStyleSheet("color: #888; font-style: italic; padding: 20px;")
-            self.layout_liste_courses.addWidget(label_vide)
-            return
-        
-        # Afficher les catégories et leurs produits
-        for categorie in sorted(self.liste_courses.keys()):
-            # Titre de la catégorie
-            titre_categorie = QtWidgets.QLabel(f"📦 {categorie}")
-            titre_categorie.setStyleSheet("""
-                font-weight: bold; 
-                font-size: 14px; 
-                color: #4CAF50; 
-                padding: 5px 0px; 
-                border-bottom: 1px solid #555;
-                margin-top: 10px;
-            """)
-            self.layout_liste_courses.addWidget(titre_categorie)
-            
-            # Produits de la catégorie
-            for produit in sorted(self.liste_courses[categorie]):
-                widget_produit = QtWidgets.QWidget()
-                layout_produit = QtWidgets.QHBoxLayout(widget_produit)
-                layout_produit.setContentsMargins(10, 2, 5, 2)
-                
-                # Label du produit
-                label_produit = QtWidgets.QLabel(f"• {produit}")
-                label_produit.setStyleSheet("color: white; padding: 2px 0px;")
-                
-                # Bouton de suppression
-                btn_supprimer = QtWidgets.QPushButton("✕")
-                btn_supprimer.setFixedSize(20, 20)
-                btn_supprimer.setStyleSheet("""
-                    QPushButton {
-                        background-color: #ff4444;
-                        color: white;
-                        border: none;
-                        border-radius: 10px;
-                        font-size: 12px;
-                        font-weight: bold;
-                    }
-                    QPushButton:hover {
-                        background-color: #ff6666;
-                    }
-                """)
-                btn_supprimer.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-                btn_supprimer.clicked.connect(lambda checked, p=produit, c=categorie: self.retirer_de_liste_courses(p, c))
-                
-                layout_produit.addWidget(label_produit)
-                layout_produit.addStretch()
-                layout_produit.addWidget(btn_supprimer)
-                
-                self.layout_liste_courses.addWidget(widget_produit)
-        
-        # Spacer pour pousser le contenu vers le haut
-        self.layout_liste_courses.addStretch()
-    
-    def effacer_liste_courses(self):
-        """Efface toute la liste de courses"""
-        self.liste_courses.clear()
-        self.mettre_a_jour_affichage_liste_courses()
     
     def afficher_popup_articles(self, ligne, colonne, articles):
-        """Affiche une popup avec les articles d'une cellule"""
+        """Affiche une popup listant les articles d'une cellule cliquée."""
         if not articles:
             return
-        
-        # Fermer la popup existante
+
         if self.popup_actuelle:
             self.popup_actuelle.hide()
             self.popup_actuelle.deleteLater()
-        
-        # Créer et afficher la nouvelle popup
-        popup = self.creer_popup_articles(articles)
+
+        popup = self.creer_popup_articles(articles, ligne, colonne)
         popup.show()
         self.popup_actuelle = popup
 
-    def creer_popup_articles(self, articles):
-        """Crée une popup pour afficher les articles d'une cellule"""
-        popup = QtWidgets.QWidget(self)
-        popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
-        popup.setStyleSheet("""
-            background-color: #2c2c2c;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 5px;
-        """)
-        
-        layout = QtWidgets.QVBoxLayout(popup)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(5)
-        
-        # Titre de la popup
-        titre = QtWidgets.QLabel("Articles dans cette case:", popup)
-        titre.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(titre)
-        
-        # Liste des articles
-        for article in articles:
-            label = QtWidgets.QLabel(article, popup)
-            label.setStyleSheet("padding: 5px;")
-            layout.addWidget(label)
-        
-        # Ajuster la taille de la popup
-        popup.adjustSize()
-        
-        # Positionner la popup au centre de l'écran
-        screen = QtWidgets.QApplication.primaryScreen().geometry()
-        popup_width = popup.width()
-        popup_height = popup.height()
-        
-        # Calculer la position centrale
-        x = (screen.width() - popup_width) // 2
-        y = (screen.height() - popup_height) // 2
-        
-        popup.move(x, y)
-        
-        return popup
+    def creer_popup_articles(self, articles, ligne, colonne):
+        try:
+            if not isinstance(articles, list):
+                print("Erreur : 'articles' n'est pas une liste")
+                return None
+
+            popup = QtWidgets.QWidget(self)
+            popup.setWindowFlags(QtCore.Qt.WindowType.Popup)
+            popup.setStyleSheet("""
+                background-color: #2c2c2c;
+                color: white;
+                border: 1px solid #444;
+                border-radius: 5px;
+            """)
+            popup.setMinimumHeight(100)
+
+            layout = QtWidgets.QVBoxLayout(popup)
+            layout.setContentsMargins(10, 10, 10, 10)
+            layout.setSpacing(5)
+
+            titre = QtWidgets.QLabel("Articles dans cette case :", popup)
+            titre.setStyleSheet("font-weight: bold; font-size: 14px;")
+            titre.setMaximumHeight(50)
+            layout.addWidget(titre)
+
+            from collections import Counter
+            compte_articles = Counter(articles)
+
+            for produit, quantite in compte_articles.items():
+                texte = f"{produit} x{quantite}" if quantite > 1 else str(produit)
+                bouton_popup = QtWidgets.QPushButton(texte, popup)
+                bouton_popup.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+                bouton_popup.setStyleSheet("padding: 5px;")
+
+                def create_slot(bouton, produit=produit):
+                    def slot():
+                        self.bouton_popup_signal.emit(ligne, colonne, produit)
+                        layout.removeWidget(bouton)
+                        bouton.deleteLater()
+
+                        if layout.count() <= 1:
+                            popup.close()
+                    return slot
+
+                bouton_popup.clicked.connect(create_slot(bouton_popup))
+                layout.addWidget(bouton_popup)
+
+            popup.adjustSize()
+            screen = QtWidgets.QApplication.primaryScreen().geometry()
+            popup.move((screen.width() - popup.width()) // 2, (screen.height() - popup.height()) // 2)
+            return popup
+
+        except Exception as e:
+            print("Erreur dans creer_popup_articles :", e)
+            return None
 
     def create_partie_gauche(self):
         """Crée la partie gauche de l'interface"""
@@ -205,11 +165,11 @@ class VueClient(QtWidgets.QWidget):
         # Section des articles
         self.create_articles()
         
-        # Section de la liste de courses (remplace le tableau de bord)
-        self.create_liste_courses()
+        # Section du tableau de bord
+        self.create_tableau_bord()
         
         layout.addWidget(self.liste_articles, stretch=2)
-        layout.addWidget(self.widget_liste_courses, stretch=1)
+        layout.addWidget(self.tableau_de_bord, stretch=1)
         
         self.layout.addWidget(self.partie_gauche, stretch=1)
     
@@ -242,59 +202,6 @@ class VueClient(QtWidgets.QWidget):
         layout_articles.addWidget(scroll, stretch=12)
         self.recherche_articles.textChanged.connect(self.on_recherche_changee)
     
-    def create_liste_courses(self):
-        """Crée la section de la liste de courses"""
-        self.widget_liste_courses = QtWidgets.QWidget(self.partie_gauche)
-        self.widget_liste_courses.setStyleSheet("background-color: #2c2c2c; color: white;")
-        self.widget_liste_courses.setMinimumHeight(100)
-        self.widget_liste_courses.setContentsMargins(20, 10, 20, 10)
-        
-        layout_principal = QtWidgets.QVBoxLayout(self.widget_liste_courses)
-        
-        # Titre de la section
-        titre_liste = QtWidgets.QLabel("🛒 Liste de courses")
-        titre_liste.setStyleSheet("font-weight: bold; font-size: 16px; color: #4CAF50; margin-bottom: 10px;")
-        layout_principal.addWidget(titre_liste)
-        
-        # Zone scrollable pour la liste de courses
-        self.scroll_liste_courses = QtWidgets.QScrollArea()
-        self.scroll_liste_courses.setWidgetResizable(True)
-        self.scroll_liste_courses.setStyleSheet("border: none; background-color: #333;")
-        
-        self.widget_contenu_liste = QtWidgets.QWidget()
-        self.layout_liste_courses = QtWidgets.QVBoxLayout(self.widget_contenu_liste)
-        self.layout_liste_courses.setContentsMargins(10, 10, 10, 10)
-        self.layout_liste_courses.setSpacing(5)
-        
-        self.scroll_liste_courses.setWidget(self.widget_contenu_liste)
-        
-        # Boutons d'action (comme dans l'ancien tableau de bord)
-        layout_boutons = QtWidgets.QHBoxLayout()
-        layout_boutons.setContentsMargins(0, 10, 0, 10)
-        
-        self.bouton_ouvrir = QtWidgets.QPushButton("Ouvrir", self.widget_liste_courses)
-        self.bouton_sauvegarder = QtWidgets.QPushButton("Sauvegarder", self.widget_liste_courses)
-        self.bouton_effacer = QtWidgets.QPushButton("Effacer", self.widget_liste_courses)
-        
-        for bouton in [self.bouton_ouvrir, self.bouton_sauvegarder, self.bouton_effacer]:
-            bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-            bouton.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin: 2px;")
-            bouton.setMaximumWidth(80)
-            bouton.setMaximumHeight(30)
-        
-        # Connecter le bouton effacer à la fonction de nettoyage de la liste
-        self.bouton_effacer.clicked.connect(self.effacer_liste_courses)
-        
-        layout_boutons.addWidget(self.bouton_ouvrir)
-        layout_boutons.addWidget(self.bouton_sauvegarder)
-        layout_boutons.addWidget(self.bouton_effacer)
-        
-        layout_principal.addWidget(self.scroll_liste_courses)
-        layout_principal.addLayout(layout_boutons)
-        
-        # Initialiser l'affichage
-        self.mettre_a_jour_affichage_liste_courses()
-    
     def on_recherche_changee(self, texte):
         """Lorsque le texte change"""
         self.recherche_changee.emit(texte)
@@ -305,10 +212,67 @@ class VueClient(QtWidgets.QWidget):
             return produits
         return [p for p in produits if filtre.lower() in p.lower()]
     
+    def create_tableau_bord(self):
+        """Crée la section du tableau de bord"""
+        self.tableau_de_bord = QtWidgets.QWidget(self.partie_gauche)
+        self.tableau_de_bord.setStyleSheet("background-color: #2c2c2c; color: white;")
+        self.tableau_de_bord.setMinimumHeight(100)
+        self.tableau_de_bord.setContentsMargins(40, 0, 0, 0)
+        
+        layout_tableau_bord = QtWidgets.QVBoxLayout(self.tableau_de_bord)
+        
+        self.label_tableau_bord = QtWidgets.QLabel("Réglages du magasin", self.tableau_de_bord)
+        
+        # Contrôles pour les colonnes
+        layout_colonnes = QtWidgets.QHBoxLayout()
+        self.spinTableauBordColonnes = QtWidgets.QSpinBox(self.tableau_de_bord)
+        self.spinTableauBordColonnes.setRange(1, 50)
+        self.spinTableauBordColonnes.setValue(35)
+        self.spinTableauBordColonnes.setStyleSheet("max-width: 70px;")
+        label_colonnes = QtWidgets.QLabel("Nombre de colonnes visibles", self.tableau_de_bord)
+        
+        layout_colonnes.addWidget(self.spinTableauBordColonnes)
+        layout_colonnes.addWidget(label_colonnes)
+        
+        # Contrôles pour les lignes
+        layout_lignes = QtWidgets.QHBoxLayout()
+        self.spinTableauBordLignes = QtWidgets.QSpinBox(self.tableau_de_bord)
+        self.spinTableauBordLignes.setRange(1, 60)
+        self.spinTableauBordLignes.setValue(52)
+        self.spinTableauBordLignes.setStyleSheet("max-width: 70px;")
+        label_lignes = QtWidgets.QLabel("Nombre de lignes visibles", self.tableau_de_bord)
+        
+        layout_lignes.addWidget(self.spinTableauBordLignes)
+        layout_lignes.addWidget(label_lignes)
+        
+        # Boutons d'action
+        layout_boutons = QtWidgets.QHBoxLayout()
+        layout_boutons.setContentsMargins(10, 10, 10, 10)
+        
+        self.bouton_ouvrir = QtWidgets.QPushButton("Ouvrir", self.tableau_de_bord)
+        self.bouton_sauvegarder = QtWidgets.QPushButton("Sauvegarder", self.tableau_de_bord)
+        self.bouton_effacer = QtWidgets.QPushButton("Effacer", self.tableau_de_bord)
+        
+        for bouton in [self.bouton_ouvrir, self.bouton_sauvegarder, self.bouton_effacer]:
+            bouton.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+            bouton.setStyleSheet("background-color: #444; color: white; border-radius: 5px; padding: 5px; margin-bottom: 10px;")
+            bouton.setMaximumWidth(200)
+            bouton.setMaximumHeight(50)
+        
+        layout_boutons.addWidget(self.bouton_ouvrir)
+        layout_boutons.addWidget(self.bouton_sauvegarder)
+        layout_boutons.addWidget(self.bouton_effacer)
+        
+        # Ajout des layout au tableau de bord
+        layout_tableau_bord.addWidget(self.label_tableau_bord)
+        layout_tableau_bord.addLayout(layout_colonnes)
+        layout_tableau_bord.addLayout(layout_lignes)
+        layout_tableau_bord.addLayout(layout_boutons)
+            
     def create_partie_droite(self):
         """Crée la partie droite avec la grille et l'image du magazin"""
         self.partie_droite = QtWidgets.QWidget(self)
-        self.partie_droite.setStyleSheet("background-color: #00000000;")
+        self.partie_droite.setStyleSheet("background-color: #232323;")
         layout = QtWidgets.QVBoxLayout(self.partie_droite)
         
         # Header avec nom du magasin
@@ -326,9 +290,60 @@ class VueClient(QtWidgets.QWidget):
         self.nom_magasin.setMinimumWidth(400)
         self.nom_magasin.setMaximumWidth(400)
         self.nom_magasin.setStyleSheet("padding: 5px;")
+  
         
         layout_header.addWidget(self.label)
         layout_header.addWidget(self.nom_magasin)
+        
+        # légende1
+        legend_container1 = QtWidgets.QWidget(self.partie_droite)
+        legend_layout1 = QtWidgets.QHBoxLayout(legend_container1)
+        legend_layout1.setContentsMargins(10, 0, 10, 10)
+        legend_layout1.setSpacing(5)
+        
+        # Carré de couleur
+        legend_color1 = QtWidgets.QFrame(legend_container1)
+        legend_color1.setFixedSize(20, 20)
+        legend_color1.setStyleSheet("background-color: rgba(100, 10, 10, 1); border: 1px solid black;")
+        
+        # Zone de texte
+        legend_label = QtWidgets.QLabel("couloirs", legend_container1)
+        legend_label.setStyleSheet("color: white; font-size: 14px;")
+        
+        legend_layout1.addWidget(legend_color1)
+        legend_layout1.addWidget(legend_label)
+        
+        
+        
+            # Ajout de la légende2
+        legend_container2 = QtWidgets.QWidget(self.partie_droite)
+        legend_layout2 = QtWidgets.QHBoxLayout(legend_container2)
+        legend_layout2.setContentsMargins(10, 0, 10, 10)
+        legend_layout2.setSpacing(5)
+        
+        # Carré de couleur
+        legend_color2 = QtWidgets.QFrame(legend_container2)
+        legend_color2.setFixedSize(20, 20)
+        legend_color2.setStyleSheet("background-color:  rgba(10, 100, 10, 1); border: 1px solid black;")
+        
+        # Zone de texte
+        legend_label2 = QtWidgets.QLabel("rayons", legend_container2)
+        legend_label2.setStyleSheet("color: white; font-size: 14px;")
+
+        bouton_deconnection = QtWidgets.QPushButton("Se déconnecter")
+        bouton_deconnection.setStyleSheet("padding: 5px; margin-left: 20px")
+        bouton_deconnection.clicked.connect(self.fermer_et_connexion)
+
+        
+        legend_layout2.addWidget(legend_color2)
+        legend_layout2.addWidget(legend_label2)
+
+        bouton_deconnection = QtWidgets.QPushButton("Se déconnecter")
+        bouton_deconnection.clicked.connect(self.on_bouton_deconnection)
+        
+        layout_header.addWidget(legend_container1)
+        layout_header.addWidget(legend_container2)
+        layout_header.addWidget(bouton_deconnection)
         
         # Zone du plan avec grille
         self.create_zone_plan()
@@ -337,16 +352,20 @@ class VueClient(QtWidgets.QWidget):
         layout.addWidget(self.zone_superposee, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.partie_droite, stretch=1)
     
+    def on_bouton_deconnection(self):
+        """emmet le signal de deconnexion"""
+        self.deconnexion_signal.emit()
+    
     def create_zone_plan(self):
         """Crée la zone du plan avec la grille interactive"""
         self.zone_superposee = QtWidgets.QWidget(self.partie_droite)
         self.zone_superposee.setContentsMargins(0, 0, 0, 0)
-        self.zone_superposee.setFixedSize(760, 900)
+        self.zone_superposee.setFixedSize(720, 900)
         self.zone_superposee.setStyleSheet("background-color: transparent;")
         
         # Image de fond
         self.label_plan = QtWidgets.QLabel(self.zone_superposee)
-        self.label_plan.setGeometry(0, 0, 760, 900)
+        self.label_plan.setGeometry(0, 0, 720, 900)
         
         transform = QTransform().rotate(90)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -355,7 +374,7 @@ class VueClient(QtWidgets.QWidget):
         plan = QPixmap(chemin)
         if plan.isNull():
             print(f"Erreur : l'image n'a pas pu être chargée depuis {chemin}")
-            plan = QPixmap(760, 900)
+            plan = QPixmap(720, 900)
         
         plan = plan.transformed(transform)
         self.label_plan.setPixmap(plan)
@@ -366,7 +385,7 @@ class VueClient(QtWidgets.QWidget):
         
         # Grille interactive
         self.labels_grille = QtWidgets.QWidget(self.zone_superposee)
-        self.labels_grille.setStyleSheet("background-color: #00000000;")
+        self.labels_grille.setStyleSheet("background-color: transparent;")
         self.labels_grille.setGeometry(self.label_plan.geometry())
         self.labels_grille.resize(self.label_plan.width(), self.label_plan.height())
         
@@ -389,23 +408,84 @@ class VueClient(QtWidgets.QWidget):
             drop_area.placer_produit.connect(self.on_placer_produit)
             drop_area.cellule_cliquee.connect(self.on_cellule_cliquee)
             self.cellules_grille[(i, j)] = drop_area
+            
+    def effacer_projet(self):
+        """
+        Réinitialise le fichier '../magasins/sauvegarde_rapide.csv', vide le contenu
+        de toutes les cellules de la grille, efface le nom du projet dans le widget
+        et supprime la popup active,
+        """
+        try:
+            # Réinitialisation du CSV (en gardant l'en-tête)
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
+            with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+            print("Fichier CSV réinitialisé avec succès.")
+        except Exception as e:
+            print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
+
+        # Effacer le contenu visuel de toutes les cellules de la grille (DropArea)
+        for cell in self.labels_grille.findChildren(DropArea):
+            cell.setText("")
+            cell.setStyleSheet(cell.default_style)
+            cell.articles = []  # Réinitialiser le contenu interne
+
+        # Effacer le nom du projet affiché dans le widget
+        self.nom_magasin.setText("")
+
+        # Supprimer la popup active, si elle existe
+        if hasattr(self, "popup_actuelle") and self.popup_actuelle:
+            self.popup_actuelle.hide()
+            self.popup_actuelle.deleteLater()
+            self.popup_actuelle = None
+
+        print("Contenu du projet, nom affiché et pop-up effacés. L'application reste ouverte.")
     
     def connecter_signaux(self):
         """Connecte les signaux internes"""
         self.nom_magasin.textChanged.connect(self.nom_magasin_change.emit)
-    
-    def on_dimensions_changees(self):
-        """Émet le signal de changement de dimensions"""
-        self.dimensions_changees.emit(self.spinTableauBordColonnes.value(), self.spinTableauBordLignes.value())
-    
+        self.bouton_effacer.clicked.connect(self.effacer_projet)
+        self.bouton_ouvrir.clicked.connect(self.charger_csv)
+        self.nom_magasin.textChanged.connect(self.maj_nom_projet_csv)
+        self.bouton_sauvegarder.clicked.connect(self.on_bouton_sauvegarder_clicked)
+
+    def fermer_et_connexion(self):
+        self.deconnecter_signal.emit()
+
     def on_placer_produit(self, ligne, colonne, produit):
         """Émet le signal de placement de produit"""
         self.placer_produit.emit(ligne, colonne, produit)
 
     def on_cellule_cliquee(self, ligne, colonne):
-        """Gère le clic sur une cellule"""
-        self.cellule_cliquee.emit(ligne, colonne)
+        """
+        Gère le clic sur une cellule : recherche la DropArea correspondante dans la grille.
+        Si la cellule possède des articles, affiche une popup avec le contenu.
+        """
+        for drop_area in self.labels_grille.findChildren(DropArea):
+            if drop_area.ligne == ligne and drop_area.colonne == colonne:
+                if drop_area.articles and len(drop_area.articles) > 0:
+                    self.afficher_popup_articles(ligne, colonne, drop_area.articles)
+                break
     
+    def on_bouton_sauvegarder_clicked(self):
+        """Slot appelé lorsqu'on clique sur le bouton Sauvegarder."""
+        try:
+            self.sauvegarder_signal.emit()
+            print("Signal de sauvegarde émis.")
+        except Exception as e:
+          
+            print(f"[ERREUR] lors du clic sur le bouton Sauvegarder: {e}")
+        
+    def supprimer_article_cellule(self, ligne, colonne, produit):
+        """Supprime un article d'une cellule DropArea spécifique"""
+        for drop_area in self.labels_grille.findChildren(DropArea):
+            if drop_area.ligne == ligne and drop_area.colonne == colonne:
+                if produit in drop_area.articles:
+                    drop_area.articles.remove(produit)
+            drop_area.mettre_a_jour_apparence()
+
     def afficher_categories(self, categories):
         """Affiche la liste des catégories"""
         self.clear_layout(self.layout_articles_box)
@@ -432,11 +512,9 @@ class VueClient(QtWidgets.QWidget):
         btn_retour.clicked.connect(self.retour_categories.emit)
         self.layout_articles_box.addWidget(btn_retour)
         
-        # Produits draggables avec clic gauche
+        # Produits draggables
         for produit in produits:
             label = DraggableLabel(produit, self.articles_box)
-            # Connecter le signal de clic gauche
-            label.produit_clique.connect(self.ajouter_a_liste_courses)
             self.layout_articles_box.addWidget(label)
         
         self.articles_box.adjustSize()
@@ -451,83 +529,86 @@ class VueClient(QtWidgets.QWidget):
     
     def mettre_a_jour_grille(self, rows, cols):
         """Met à jour la grille avec de nouvelles dimensions"""
+        if rows is not None:
+            self.rows = rows
+        if cols is not None:
+            self.cols = cols
         self.create_grille(rows, cols)
     
     def effacer_grille(self):
         """Efface tous les produits de la grille"""
         for cellule in self.cellules_grille.values():
             cellule.setText("")
-            cellule.setStyleSheet("background-color: #00000000;")
+            cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.8); background-color: #00000000;")
 
+    def sauvegarder_tous_les_produits(self):
+        """
+        Ouvre un explorateur de fichiers pour permettre à l'utilisateur
+        de choisir où sauvegarder les données de la grille au format CSV.
+        """
+        # Ouvre le dialogue pour choisir le fichier
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Enregistrer la disposition du magasin",
+            "disposition_magasin.csv",  # nom par défaut
+            "Fichiers CSV (*.csv);;Tous les fichiers (*)"
+        )
 
+        # Si l'utilisateur annule, on quitte la méthode
+        if not file_path:
+            print("[INFO] Sauvegarde annulée par l'utilisateur.")
+            return
+
+        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+        nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
+
+        try:
+            with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+                writer = csv.writer(csvfile, delimiter=';')
+                writer.writerow(header)
+
+                # Parcourir toutes les cellules de la grille
+                for drop_area in self.labels_grille.findChildren(DropArea):
+                    if hasattr(drop_area, "articles") and drop_area.articles:
+                        produit_counts = Counter(drop_area.articles)
+                        x, y = drop_area.colonne, drop_area.ligne
+                        coord_formatee = f"{x}{y}"
+                        for prod, quantite in produit_counts.items():
+                            produit_str = f"{prod} x{quantite}" if quantite > 1 else prod
+                            writer.writerow([nom_projet, produit_str, x, y, coord_formatee])
+                    else:
+                        produit = drop_area.text().strip()
+                        if produit:
+                            x, y = drop_area.colonne, drop_area.ligne
+                            coord_formatee = f"{x}{y}"
+                            writer.writerow([nom_projet, produit, x, y, coord_formatee])
+
+            print(f"[INFO] Tous les produits ont été sauvegardés dans : {file_path}")
+        except Exception as e:
+            print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
+        
+            
 class DraggableLabel(QtWidgets.QLabel):
-    """Label draggable pour les produits avec support du clic gauche"""
-    
-    # Signal émis quand on clique gauche sur le produit
-    produit_clique = QtCore.pyqtSignal(str)
+    """Label draggable pour les produits"""
     
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setMinimumHeight(40)
         self.setMaximumHeight(40)
         self.setMaximumWidth(300)
-        self.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-                color: white;
-                border: 1px solid #555;
-                border-radius: 5px;
-                padding: 8px;
-                margin: 2px;
-            }
-            QLabel:hover {
-                background-color: #444;
-                border-color: #4CAF50;
-            }
-        """)
+        self.setStyleSheet("color: white; background-color: #333; padding: 5px; border-radius: 3px;")
         self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
     
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            # Stocker la position du clic pour détecter le drag plus tard
-            self.click_position = event.position()
-            self.drag_started = False
-    
-    def mouseMoveEvent(self, event):
-        # Si la souris bouge suffisamment, commencer le drag
-        if (event.buttons() == QtCore.Qt.MouseButton.LeftButton and 
-            hasattr(self, 'click_position') and not hasattr(self, 'drag_started')):
+            mimeData = QtCore.QMimeData()
+            mimeData.setText(self.text())
             
-            distance = (event.position() - self.click_position).manhattanLength()
+            drag = QtGui.QDrag(self)
+            drag.setMimeData(mimeData)
             
-            # Si on bouge la souris de plus de 5 pixels, commencer le drag
-            if distance > 5:
-                self.drag_started = True
-                mimeData = QtCore.QMimeData()
-                mimeData.setText(self.text())
-                
-                drag = QtGui.QDrag(self)
-                drag.setMimeData(mimeData)
-                
-                pixmap = self.grab()
-                drag.setPixmap(pixmap)
-                drag.setHotSpot(QtCore.QPoint(0, 0))
-                
-                drag.exec(QtCore.Qt.DropAction.MoveAction)
-    
-    def mouseReleaseEvent(self, event):
-        if (event.button() == QtCore.Qt.MouseButton.LeftButton and 
-            hasattr(self, 'click_position') and 
-            not getattr(self, 'drag_started', False)):
+            pixmap = self.grab()
+            drag.setPixmap(pixmap)
+            drag.setHotSpot(QtCore.QPoint(0, 0))
             
-            # C'était un simple clic, émettre le signal
-            self.produit_clique.emit(self.text())
-        
-        # Nettoyer les attributs temporaires
-        if hasattr(self, 'click_position'):
-            delattr(self, 'click_position')
-        if hasattr(self, 'drag_started'):
-            delattr(self, 'drag_started')
-        
-        super().mouseReleaseEvent(event)
+            drag.exec(QtCore.Qt.DropAction.MoveAction)

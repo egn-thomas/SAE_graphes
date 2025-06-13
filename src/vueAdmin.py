@@ -50,7 +50,7 @@ class VueAdmin(QtWidgets.QWidget):
         """Crée un fichier de sauvegarde vide avec en-tête si aucun n'existe."""
         
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+        chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
         if not os.path.exists(chemin):
             with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
@@ -129,7 +129,7 @@ class VueAdmin(QtWidgets.QWidget):
         try:
             # Si le fichier existe, on le lit
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             if os.path.exists(chemin):
                 with open(chemin, "r", newline='', encoding="utf-8") as csvfile:
                     reader = csv.reader(csvfile, delimiter=';')
@@ -487,7 +487,7 @@ class VueAdmin(QtWidgets.QWidget):
         try:
             # Réinitialisation du CSV (en gardant l'en-tête)
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])

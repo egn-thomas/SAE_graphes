@@ -116,7 +116,7 @@ class DropArea(QLabel):
             coord_formatee = f"{x}{y}"
 
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.jpg")
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             file_path = chemin
             header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
