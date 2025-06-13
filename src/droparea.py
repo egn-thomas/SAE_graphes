@@ -109,21 +109,20 @@ class DropArea(QLabel):
         try:
             # Récupérer le nom du projet depuis la vue administrateur, si disponible
             if hasattr(self, "vue_admin") and self.vue_admin is not None:
-                nom_projet = self.vue_admin.nom_magasin.text()
-                if not nom_projet:
-                    nom_projet = ""
+                nom_projet = self.vue_admin.nom_magasin.text().strip()
             else:
                 nom_projet = ""
         
            
             x = self.colonne
-            y = str(self.ligne)
+            y = self.ligne
             coord_formatee = f"{x}{y}"
-
+            colonnes_visibles = self.vue_admin.spinTableauBordColonnes.value()
+            lignes_visibles = self.vue_admin.spinTableauBordLignes.value()
             script_dir = os.path.dirname(os.path.abspath(__file__))
             chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             file_path = chemin
-            header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+            header = ["Nom du projet", "Nom du produit", "X", "Y", "Position", "Colonnes", "Lignes"]
 
             # Vérifier si le fichier existe et déterminer s'il est vide
             file_exists = os.path.exists(file_path)
@@ -135,7 +134,7 @@ class DropArea(QLabel):
                 if file_empty:
                     writer.writerow(header)
                 # Écriture de la ligne contenant le nom du projet et le produit
-                writer.writerow([nom_projet, produit, x, y, coord_formatee])
+                writer.writerow([nom_projet, produit, x, y, coord_formatee, colonnes_visibles, lignes_visibles])
 
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")

@@ -54,7 +54,7 @@ class VueAdmin(QtWidgets.QWidget):
         if not os.path.exists(chemin):
             with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position", "Colonnes", "Lignes"])
 
     def charger_csv(self):
         """
@@ -67,6 +67,8 @@ class VueAdmin(QtWidgets.QWidget):
         - Colonne (numérique, en 1-base)
         - Ligne (numérique, en 1-base)
         - Position (optionnel : par exemple "A1")
+        -colonnes
+        -lignes
         
         Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0 base,
         recherche la DropArea correspondante, et met à jour son texte, son style (background)
@@ -83,16 +85,23 @@ class VueAdmin(QtWidgets.QWidget):
             with open(chemin_fichier, "r", encoding="utf-8") as csvfile:
                 reader = csv.reader(csvfile, delimiter=";")
                 header = next(reader, None)  # Ignorer l'en-tête
-                project_name = None
 
                 for row in reader:
-                    if len(row) < 5:
+                    if len(row) < 7:
                         continue
-                    nom_projet, produit, col_str, ligne_str, position = row
+                    nom_projet, produit, col_str, ligne_str, position, colonnes_str, lignes_str = row[:7]
 
                     if project_name is None:
                         project_name = nom_projet
-
+                    if not configuration_set:
+                        try:
+                            colonnes_val = int(colonnes_str)
+                            lignes_val = int(lignes_str)
+                            self.spinTableauBordColonnes.setValue(colonnes_val)
+                            self.spinTableauBordLignes.setValue(lignes_val)
+                        except ValueError:
+                            pass
+                        configuration_set = True
                     try:
                         col_index = int(col_str)   # On suppose ici que les valeurs sont déjà en 0-base
                         row_index = int(ligne_str)
@@ -490,7 +499,7 @@ class VueAdmin(QtWidgets.QWidget):
             chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position","Colonnes", "Lignes"])
             print("Fichier CSV réinitialisé avec succès.")
         except Exception as e:
             print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
@@ -628,9 +637,10 @@ class VueAdmin(QtWidgets.QWidget):
             print("[INFO] Sauvegarde annulée par l'utilisateur.")
             return
 
-        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
+        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position","Colonnes", "Lignes"]
         nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
-
+        colonnes_visibles = self.spinTableauBordColonnes.value() if hasattr(self, "spinTableauBordColonnes") else ""
+        lignes_visibles = self.spinTableauBordLignes.value() if hasattr(self, "spinTableauBordLignes") else ""
         try:
             with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
@@ -650,7 +660,7 @@ class VueAdmin(QtWidgets.QWidget):
                         if produit:
                             x, y = drop_area.colonne, drop_area.ligne
                             coord_formatee = f"{x}{y}"
-                            writer.writerow([nom_projet, produit, x, y, coord_formatee])
+                            writer.writerow([nom_projet, produit, x, y, coord_formatee,colonnes_visibles, lignes_visibles])
 
             print(f"[INFO] Tous les produits ont été sauvegardés dans : {file_path}")
         except Exception as e:
