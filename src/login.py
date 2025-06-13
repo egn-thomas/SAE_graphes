@@ -1,7 +1,7 @@
 import os
 import json
 from hashlib import md5
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 from vueAdmin import VueAdmin
 from vueClient import VueClient
 
@@ -83,15 +83,16 @@ class PageConnexion(QDialog):
 
         if identifiant in self.utilisateurs:
             utilisateur = self.utilisateurs[identifiant]
-            if utilisateur.get("password") == motdepasse_hash:
+            if utilisateur.get("password") == motdepasse_hash :
                 # Récupération du rôle, si présent, et fermeture de la fenêtre de connexion
                 self.role = utilisateur.get("role")
                 self.accept()  # Connexion réussie
-                print("conexion réussie")
+                print("connexion réussie")
                 return
-
+            else :
+                QMessageBox.critical(self,"Erreur de connexion","Identifiant ou mot de passe incorrect")
         else :
-            print("Identifiant ou mot de passe incorrect")
+            QMessageBox.critical(self,"Erreur de connexion","Identifiant ou mot de passe incorrect")
 
     def get_infos_connexion(self) :
         """Retourne le rôle de l'utilisateur connecté."""

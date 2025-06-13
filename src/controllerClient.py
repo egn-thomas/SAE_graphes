@@ -75,27 +75,11 @@ class ClientController(QObject):
         self.retour_connexion = True
         self.vue.close()
 
-    def changer_colonnes(self, valeur):
-        print(f"Colonnes modifiées : {valeur}")
-        self.model.nb_colonnes = valeur
-        self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
-        self.model.initialiser_graphe()
-
     def changer_lignes(self, valeur):
         print(f"Lignes modifiées : {valeur}")
         self.model.nb_lignes = valeur
         self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
-
-    def timer_lignes(self):
-        valeur_initiale = self.vue.spinTableauBordLignes.value()
-
-        def verifier_stabilite():
-            valeur_actuelle = self.vue.spinTableauBordLignes.value()
-            if valeur_actuelle == valeur_initiale:
-                self.changer_lignes(valeur_actuelle)
-
-        QtCore.QTimer.singleShot(1000, verifier_stabilite)
 
     def filtrer_produits(self, texte_recherche):
         """Filtre les produits selon le texte de recherche dans toutes les catégories"""

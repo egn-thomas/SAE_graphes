@@ -17,6 +17,14 @@ class MagasinController(QObject):
         self.retour_connexion = False
         self.connecter_signaux()
         self.initialiser()
+        
+        self.timer_colonnes_spinbox = QtCore.QTimer()
+        self.timer_colonnes_spinbox.setSingleShot(True)
+        self.timer_colonnes_spinbox.timeout.connect(self._appliquer_changement_colonnes)
+
+        self.timer_lignes_spinbox = QtCore.QTimer()
+        self.timer_lignes_spinbox.setSingleShot(True)
+        self.timer_lignes_spinbox.timeout.connect(self._appliquer_changement_lignes)
     
     def connecter_signaux(self):
         """Connecte les signaux de la vue aux méthodes du contrôleur"""
@@ -28,8 +36,8 @@ class MagasinController(QObject):
         self.vue.placer_produit.connect(self.placer_produit)
         self.vue.cellule_cliquee.connect(self.cellule_cliquee)
         self.vue.recherche_changee.connect(self.filtrer_produits)
-        self.vue.spinTableauBordColonnes.valueChanged.connect(self.changer_colonnes)
-        self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
+        self.vue.spinTableauBordColonnes.valueChanged.connect(self.timer_colonnes)
+        self.vue.spinTableauBordLignes.valueChanged.connect(self.timer_lignes)
         self.vue.bouton_popup_signal.connect(self.supprimer_article)
         self.vue.deconnexion_signal.connect(self.deconnecter)
 
@@ -49,28 +57,32 @@ class MagasinController(QObject):
         print("[DEBUG] : deconnexion demandée")
         self.retour_connexion = True
         self.vue.close()
+    
+    def timer_colonnes(self):
+        self.timer_colonnes_spinbox.start(1000)
+    
+    def _appliquer_changement_colonnes(self):
+        valeur = self.vue.spinTableauBordColonnes.value()
+        self.changer_colonnes(valeur)
 
     def changer_colonnes(self, valeur):
         print(f"Colonnes modifiées : {valeur}")
         self.model.nb_colonnes = valeur
-        self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
+        self.vue.mettre_a_jour_grille(self.model.nb_colonnes, valeur)
         self.model.initialiser_graphe()
+
+    def timer_lignes(self):
+        self.timer_lignes_spinbox.start(1000)
+    
+    def _appliquer_changement_lignes(self):
+        valeur = self.vue.spinTableauBordLignes.value()
+        self.changer_lignes(valeur)
 
     def changer_lignes(self, valeur):
         print(f"Lignes modifiées : {valeur}")
         self.model.nb_lignes = valeur
         self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
-
-    def timer_lignes(self):
-        valeur_initiale = self.vue.spinTableauBordLignes.value()
-
-        def verifier_stabilite():
-            valeur_actuelle = self.vue.spinTableauBordLignes.value()
-            if valeur_actuelle == valeur_initiale:
-                self.changer_lignes(valeur_actuelle)
-
-        QtCore.QTimer.singleShot(1000, verifier_stabilite)
 
     def filtrer_produits(self, texte_recherche):
         """Filtre les produits selon le texte de recherche dans toutes les catégories"""
