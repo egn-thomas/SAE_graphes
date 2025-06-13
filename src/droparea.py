@@ -139,7 +139,7 @@ class DropArea(QLabel):
 
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
-            
+
     def mettre_a_jour_apparence(self):
         if not hasattr(self, "articles") or not self.articles:
             self.setStyleSheet(self.default_style)

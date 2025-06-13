@@ -54,60 +54,83 @@ class VueAdmin(QtWidgets.QWidget):
         if not os.path.exists(chemin):
             with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position","Colonnes","Lignes"])
 
     def charger_csv(self):
         """
         Ouvre une boîte de dialogue pour permettre à l'utilisateur de choisir un fichier CSV.
-        Met à jour les DropAreas en fonction du contenu du fichier sélectionné.
-        
-        Le fichier CSV doit comporter 5 colonnes, dans cet ordre :
+        Met à jour les DropAreas en fonction du contenu du fichier sélectionné ainsi que les
+        QSpinBox pour le nombre de colonnes et de lignes à partir des valeurs présentes dans le CSV.
+
+        Le CSV doit comporter 7 colonnes, dans cet ordre :
         - Nom du projet
         - Nom du produit
-        - Colonne (numérique, en 1-base)
-        - Ligne (numérique, en 1-base)
+        - Colonne (numérique, en 1-base ou 0-base selon votre implémentation)
+        - Ligne (numérique, en 1-base ou 0-base)
         - Position (optionnel : par exemple "A1")
-        
-        Pour chaque ligne, cette méthode convertit la colonne et la ligne en indices 0 base,
-        recherche la DropArea correspondante, et met à jour son texte, son style (background)
-        et son contenu.
-        """
+        - Colonnes (nombre total de colonnes visibles)
+        - Lignes   (nombre total de lignes visibles)
 
+        Pour chaque ligne, la méthode convertit les chaînes en nombres, recherche la DropArea correspondante via ses coordonnées,
+        et met à jour son affichage et son contenu. Par ailleurs, lors de la première ligne valide, elle met à jour les deux spin box.
+        """
         chemin_fichier, _ = QFileDialog.getOpenFileName(
             self, "Ouvrir un fichier CSV", "", "Fichiers CSV (*.csv)"
         )
 
         if not chemin_fichier:
             return
+
+        configuration_set = False  # Pour s'assurer de mettre à jour les spin box une seule fois
+        project_name = None
+
         try:
             with open(chemin_fichier, "r", encoding="utf-8") as csvfile:
                 reader = csv.reader(csvfile, delimiter=";")
                 header = next(reader, None)  # Ignorer l'en-tête
-                project_name = None
 
+                # Parcourir chaque ligne du CSV
                 for row in reader:
-                    if len(row) < 5:
+                    # On s'attend à 7 colonnes : sinon on ignore cette ligne
+                    if len(row) < 7:
                         continue
-                    nom_projet, produit, col_str, ligne_str, position = row
+                    # On ne prend que les 7 premières colonnes
+                    nom_projet, produit, col_str, ligne_str, position, colonnes_str, lignes_str = row[:7]
 
+                    # Met à jour le nom du projet (à partir de la première ligne)
                     if project_name is None:
                         project_name = nom_projet
 
+                    # Met à jour les spin box pour le nombre de colonnes et de lignes, seulement une fois
+                    if not configuration_set:
+                        try:
+                            colonnes_val = int(colonnes_str)
+                            lignes_val = int(lignes_str)
+                            self.spinTableauBordColonnes.setValue(colonnes_val)
+                            self.spinTableauBordLignes.setValue(lignes_val)
+                        except ValueError:
+                            pass
+                        configuration_set = True
+
+                    # Conversion des coordonnées
                     try:
-                        col_index = int(col_str)   # On suppose ici que les valeurs sont déjà en 0-base
+                        # Si dans votre CSV, les coordonnées sont écrites en 1-base et que vos DropArea utilisent 0-base,
+                        # pensez à soustraire 1 : int(col_str) - 1 et int(ligne_str) - 1.
+                        col_index = int(col_str)
                         row_index = int(ligne_str)
                     except ValueError:
                         continue
 
+                    # Parcourir les DropArea et mettre à jour celle correspondant aux coordonnées lues
                     for drop_area in self.labels_grille.findChildren(DropArea):
                         if drop_area.colonne == col_index and drop_area.ligne == row_index:
                             if produit.strip():
-                                # Si des produits sont déjà présents, on ajoute le nouveau
+                                # Ajout du produit dans la liste interne (pas de remplacement)
                                 if hasattr(drop_area, "articles") and drop_area.articles:
                                     drop_area.articles.append(produit)
                                 else:
                                     drop_area.articles = [produit]
-                                # Met à jour le texte affiché en joignant les produits par une virgule
+                                # Affiche tous les produits de la cellule séparés par une virgule
                                 drop_area.setText(", ".join(drop_area.articles))
                                 drop_area.setStyleSheet(drop_area.filled_style)
                             else:
@@ -115,9 +138,12 @@ class VueAdmin(QtWidgets.QWidget):
                                 drop_area.setStyleSheet(drop_area.default_style)
                                 drop_area.articles = []
                             break
+
+                # Met à jour le nom du magasin s'il a été récupéré
                 if project_name:
                     self.nom_magasin.setText(project_name)
-                print(f"Chargement terminé : {chemin_fichier}")
+            print(f"Chargement terminé : {chemin_fichier}")
+
         except Exception as e:
             print(f"[ERREUR] lors du chargement : {e}")
 
@@ -490,7 +516,7 @@ class VueAdmin(QtWidgets.QWidget):
             chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             with open(chemin, "w", newline='', encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
-                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
+                writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position","Colonnes","Lignes"])
             print("Fichier CSV réinitialisé avec succès.")
         except Exception as e:
             print(f"[ERREUR] Impossible de réinitialiser le CSV : {e}")
@@ -610,6 +636,7 @@ class VueAdmin(QtWidgets.QWidget):
             cellule.setText("")
             cellule.setStyleSheet("border: 1px solid rgba(0, 0, 0, 0.8); background-color: #00000000;")
 
+
     def sauvegarder_tous_les_produits(self):
         """
         Ouvre un explorateur de fichiers pour permettre à l'utilisateur
@@ -622,6 +649,8 @@ class VueAdmin(QtWidgets.QWidget):
             "disposition_magasin.csv",  # nom par défaut
             "Fichiers CSV (*.csv);;Tous les fichiers (*)"
         )
+        header = ["Nom du projet", "Nom du produit", "X", "Y", "Position", "Colonnes", "Lignes"]
+
 
         # Si l'utilisateur annule, on quitte la méthode
         if not file_path:
@@ -631,6 +660,10 @@ class VueAdmin(QtWidgets.QWidget):
         header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
         nom_projet = self.nom_magasin.text() if hasattr(self, "nom_magasin") else ""
 
+        # Récupérer le nombre de colonnes et de lignes depuis le tableau de bord
+        colonnes_visibles = self.spinTableauBordColonnes.value() if hasattr(self, "spinTableauBordColonnes") else ""
+        lignes_visibles = self.spinTableauBordLignes.value() if hasattr(self, "spinTableauBordLignes") else ""
+
         try:
             with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
@@ -638,21 +671,27 @@ class VueAdmin(QtWidgets.QWidget):
 
                 # Parcourir toutes les cellules de la grille
                 for drop_area in self.labels_grille.findChildren(DropArea):
+
+
                     if hasattr(drop_area, "articles") and drop_area.articles:
                         produit_counts = Counter(drop_area.articles)
                         x, y = drop_area.colonne, drop_area.ligne
                         coord_formatee = f"{x}{y}"
+
                         for prod, quantite in produit_counts.items():
                             produit_str = f"{prod} x{quantite}" if quantite > 1 else prod
-                            writer.writerow([nom_projet, produit_str, x, y, coord_formatee])
+                            writer.writerow([nom_projet, produit_str, x, y, coord_formatee, colonnes_visibles, lignes_visibles])
                     else:
+
                         produit = drop_area.text().strip()
                         if produit:
                             x, y = drop_area.colonne, drop_area.ligne
                             coord_formatee = f"{x}{y}"
-                            writer.writerow([nom_projet, produit, x, y, coord_formatee])
+
+                            writer.writerow([nom_projet, produit, x, y, coord_formatee, colonnes_visibles, lignes_visibles])
 
             print(f"[INFO] Tous les produits ont été sauvegardés dans : {file_path}")
+
         except Exception as e:
             print(f"[ERREUR] Problème lors de la sauvegarde des produits : {e}")
         
