@@ -36,6 +36,10 @@ class ClientModel:
         self.liste_panier.append(nom_produit)
         print (self.liste_panier)
 
+    def clear_panier(self):
+        """vide complètement le panier"""
+        self.liste_panier.clear()
+
     def enlever_produit(self, nom_produit):
         """supprime un produit de la liste"""
         for produit in self.liste_panier:

@@ -65,7 +65,7 @@ class Graphe:
         """Récupère une cellule"""
         return self.graphe.get((ligne, colonne))
 
-    def afficher_grille(self, container_widget):
+    def afficher_grille(self, container_widget, est_admin):
         """Affiche la grille graphiquement"""
         if not self.parent:
             return

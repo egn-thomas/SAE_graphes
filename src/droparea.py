@@ -33,6 +33,11 @@ class DropArea(QLabel):
             color: transparent;
             border: 1px solid rgba(255, 255, 255, 0.3);
         """
+        self.none_style = """
+            background-color: rgba(0, 0, 0, 0);
+            color: transparent;
+            border: 1px solid rgba(0, 0, 0, 0);
+        """
         self.setStyleSheet(self.default_style)
         self.ligne = 0
         self.colonne = 0

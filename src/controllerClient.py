@@ -20,7 +20,6 @@ class ClientController(QObject):
     
     def connecter_signaux(self):
         """Connecte les signaux de la vue aux méthodes du contrôleur"""
-        self.vue.bouton_effacer.clicked.connect(self.effacer_projet)
         self.vue.nom_magasin.textChanged.connect(self.mise_a_jour_nom_magasin)
         self.vue.recherche_articles.textChanged.connect(self.filtrer_produits)
         self.vue.categorie_cliquee.connect(self.afficher_produits_categorie)
@@ -30,10 +29,15 @@ class ClientController(QObject):
         self.vue.ouvrir_signal.connect(self.ouvrir_magasin)
         self.vue.enlever_produit_signal.connect(self.enlever_du_panier)
         self.vue.produit_signal.connect(self.ajouter_au_panier)
-
+        self.vue.effacer_signal.connect(self.enlever_tout_panier)
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
+
+    def enlever_tout_panier(self):
+        """vide le liste en le layout panier"""
+        self.vue.clear_layout(self.vue.layout_panier)
+        self.model.clear_panier()
 
     def ajouter_au_panier(self, nom_produit):
         """ajoute le produit correspondant au panier"""
