@@ -11,6 +11,17 @@
   "cece": { 
   "password":"707c636fc43b41bf95896592d8410fe9",
     "role": "admin"
+  },
+  "timéo": {
+    "password":"b5b65f59070d89c4fc36f66b90904982",
+    "role":"client"
+  },
+  "principalementLara":{
+    "password":"6167a554b80813d8e8ff3acb97cde989",
+    "role":"client"
+  },
+  "Thomas":{
+    "passworld":"2042101ac1f6e7741bfe43f3672e6d7c",
+    "role":"admin"
   }
-  
 }
