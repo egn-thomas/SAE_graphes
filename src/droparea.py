@@ -121,7 +121,7 @@ class DropArea(QLabel):
             coord_formatee = f"{x}{y}"
 
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            chemin = os.path.join(script_dir, "..", "magasin/sauvegarde_rapide.csv")
+            chemin = os.path.join(script_dir, "..", "magasins/sauvegarde_rapide.csv")
             file_path = chemin
             header = ["Nom du projet", "Nom du produit", "X", "Y", "Position"]
 
@@ -136,10 +136,10 @@ class DropArea(QLabel):
                     writer.writerow(header)
                 # Écriture de la ligne contenant le nom du projet et le produit
                 writer.writerow([nom_projet, produit, x, y, coord_formatee])
-                print("produit enregistrer")
 
         except Exception as e:
             print(f"[ERREUR] Problème lors de l'enregistrement du produit {produit}: {e}")
+
 
     def mettre_a_jour_apparence(self):
         if not hasattr(self, "articles") or not self.articles:

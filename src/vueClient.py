@@ -42,7 +42,7 @@ class VueClient(QtWidgets.QWidget):
         self.create_partie_droite()
         
         # Connexions des signaux
-        self.sauvegarder_signal.connect(self.sauvegarder_tous_les_produits)
+ 
         self.connecter_signaux()
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
@@ -62,15 +62,18 @@ class VueClient(QtWidgets.QWidget):
                 writer.writerow(["Nom du projet", "Nom du produit", "X", "Y", "Position"])
 
     def charger_csv(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        repertoire_defaut = os.path.join(script_dir, "..", "magasins/")
-        fichier, _ = QFileDialog.getOpenFileName(
-            parent=None,
-            caption="Choisissez le magasin où vous souhaitez aller",
-            directory = repertoire_defaut,
-            filter="Fichiers CSV (*.csv);;Tous les fichiers (*)"
-            )
+        """
+        Charge un fichier CSV et met à jour directement le quadrillage
+        en utilisant les coordonnées (X et Y) présentes dans le CSV.
+        
 
+        """
+        fichier, _ = QFileDialog.getOpenFileName(
+            parent=self,
+            caption="Choisir un fichier CSV",
+            filter="Fichiers CSV (*.csv);;Tous les fichiers (*)"
+        )
+        
         if fichier:
             self.ouvrir_signal.emit(fichier)
             try:
@@ -108,6 +111,13 @@ class VueClient(QtWidgets.QWidget):
                 self.ouvrir_signal.emit(fichier)
             except Exception as e:
                 print("Erreur lors du chargement du CSV :", e)
+    def mettre_a_jour_grille(self, rows, cols):
+        """Met à jour la grille avec de nouvelles dimensions"""
+        if rows is not None:
+            self.rows = rows
+        if cols is not None:
+            self.cols = cols
+        self.create_grille(rows, cols)
 
     def maj_nom_projet_csv(self, nouveau_nom):
         """
