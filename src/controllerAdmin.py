@@ -2,6 +2,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QObject
 from modelAdmin import MagasinModel
 from vueAdmin import VueAdmin
+from dijkstra import Dijkstra
 from login import PageConnexion
 
 
@@ -12,6 +13,7 @@ class MagasinController(QObject):
         super().__init__()
         self.vue = VueAdmin()
         self.model = MagasinModel()
+        self.dijkstra = Dijkstra()
         self.model.parent = self.vue
         self.categorie_courante = None
         self.retour_connexion = False
@@ -32,6 +34,7 @@ class MagasinController(QObject):
         self.vue.spinTableauBordLignes.valueChanged.connect(self.changer_lignes)
         self.vue.bouton_popup_signal.connect(self.supprimer_article)
         self.vue.deconnexion_signal.connect(self.deconnecter)
+        self.dijkstra.cases_rayon = self.model.cases_rayon
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -55,12 +58,14 @@ class MagasinController(QObject):
         self.model.nb_colonnes = valeur
         self.vue.mettre_a_jour_grille(self.model.nb_lignes, valeur)
         self.model.initialiser_graphe()
+        self.creer_graphe()
 
     def changer_lignes(self, valeur):
         print(f"Lignes modifiées : {valeur}")
         self.model.nb_lignes = valeur
         self.vue.mettre_a_jour_grille(valeur, self.model.nb_colonnes)
         self.model.initialiser_graphe()
+        self.creer_graphe()
 
     def timer_lignes(self):
         valeur_initiale = self.vue.spinTableauBordLignes.value()
@@ -123,3 +128,11 @@ class MagasinController(QObject):
     def effacer_projet(self):
         """Gère l'effacement complet du projet"""
         self.vue.effacer_projet()
+    
+    def creer_graphe(self):
+        """Crée le graphe pour l'algorithme de Dijkstra"""
+        rows = self.model.nb_lignes
+        cols = self.model.nb_colonnes
+        rayons = self.model.get_coordonnees_rayons()
+
+        self.dijkstra.creer_graphe(rows, cols, rayon=rayons)
