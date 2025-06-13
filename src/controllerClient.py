@@ -28,7 +28,9 @@ class ClientController(QObject):
         self.vue.recherche_changee.connect(self.filtrer_produits)
         self.vue.deconnexion_signal.connect(self.deconnecter)
         self.vue.ouvrir_signal.connect(self.ouvrir_magasin)
+        self.vue.enlever_produit_signal.connect(self.enlever_du_panier)
         self.vue.produit_signal.connect(self.ajouter_au_panier)
+
 
     def initialiser(self):
         """Initialise l'application avec les données de base"""
@@ -37,6 +39,11 @@ class ClientController(QObject):
         """ajoute le produit correspondant au panier"""
         self.vue.ajouter_produit(nom_produit)
         self.model.ajouter_produit(nom_produit)
+
+    def enlever_du_panier(self, nom_produit):
+        """enlève un produit du panier"""
+        self.vue.enlever_produit(nom_produit)
+        self.model.enlever_produit(nom_produit)
 
     def ouvrir_magasin(self, fichier):
         """ouvre un magazin pour remplir la liste"""
