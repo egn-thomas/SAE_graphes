@@ -41,8 +41,7 @@ class VueClient(QtWidgets.QWidget):
         self.create_partie_gauche()
         self.create_partie_droite()
         
-        # Connexions des signaux
- 
+        # Connexions des signaux2
         self.connecter_signaux()
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
@@ -111,6 +110,14 @@ class VueClient(QtWidgets.QWidget):
                 self.ouvrir_signal.emit(fichier)
             except Exception as e:
                 print("Erreur lors du chargement du CSV :", e)
+    def mettre_a_jour_grille(self, rows, cols):
+        """Met à jour la grille avec de nouvelles dimensions"""
+        if rows is not None:
+            self.rows = rows
+        if cols is not None:
+            self.cols = cols
+        self.create_grille(rows, cols)
+
     def mettre_a_jour_grille(self, rows, cols):
         """Met à jour la grille avec de nouvelles dimensions"""
         if rows is not None:
