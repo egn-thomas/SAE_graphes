@@ -41,8 +41,7 @@ class VueClient(QtWidgets.QWidget):
         self.create_partie_gauche()
         self.create_partie_droite()
         
-        # Connexions des signaux
- 
+        # Connexions des signaux2
         self.connecter_signaux()
         self.initialiser_sauvegarde()
         self.popup_actuelle = None
@@ -119,6 +118,14 @@ class VueClient(QtWidgets.QWidget):
             self.cols = cols
         self.create_grille(rows, cols)
 
+    def mettre_a_jour_grille(self, rows, cols):
+        """Met à jour la grille avec de nouvelles dimensions"""
+        if rows is not None:
+            self.rows = rows
+        if cols is not None:
+            self.cols = cols
+        self.create_grille(rows, cols)
+
     def maj_nom_projet_csv(self, nouveau_nom):
         """
         Met à jour le CSV '../magasins/sauvegarde_rapide.csv' en modifiant la première colonne (Nom du projet)
@@ -164,8 +171,8 @@ class VueClient(QtWidgets.QWidget):
         # Section du tableau de bord
         self.create_panier()
         
-        layout.addWidget(self.liste_articles, stretch=1)
-        layout.addWidget(self.panier, stretch=1)
+        layout.addWidget(self.liste_articles, stretch=3)
+        layout.addWidget(self.panier, stretch=2)
         
         self.layout.addWidget(self.partie_gauche, stretch=1)
     
